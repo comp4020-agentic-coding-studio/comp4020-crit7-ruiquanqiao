@@ -37,23 +37,32 @@ whole of `README.md`, your account of what the app is and what good looks like
 here. It renders the markdown to text and asks whether the served page contains
 all of it, so styling and navigation around it pass and a trimmed copy fails.
 
-## The starter's plumbing (shipped, retires with the starter)
+## Prereq's own checks
 
-`guestbook.test.ts` drives the running app over HTTP to prove the supplied
-plumbing works in this repo: a message survives a reload, and a new one reaches
-other clients over the SSE stream. A red run on a fresh clone means the platform
-is broken, not your work. It describes the starter, so it goes when the starter
-does.
+The starter's guestbook test went with the guestbook. These replace it, and
+each holds a promise the app makes:
 
-## Your spec tests (yours to write)
+- `requisites.test.ts` pins the parser to real handbook sentences: clear ones
+  become the expected tree, and a sentence with two readings (COMP8600) is
+  refused rather than guessed. It also holds the rule that keeps that honest
+  after a re-scrape: every refused course has a person's reading in
+  `data/requisite-overrides.json`, and no reading outlives the parser's
+  ability to read the course itself.
+- `planner.test.ts` drives the core flow over HTTP: a placed course survives a
+  fresh load (the crit 7 spec's "create something, and it's still there"), and
+  a placement gets a warning for the wrong semester, for a prerequisite that
+  comes later, and for an incompatible course, but never a refusal. The
+  example plan stays read-only and clear of problems.
+- `catalog.test.ts` checks requisites render as linked structure, the reverse
+  "what it leads to" list, and crawls every internal link the way CI's
+  post-deploy link check will, so a dead link fails here first.
 
-Turning the week's published spec into tests is your work, not the template's.
-Some spec lines are mechanically checkable — assert those here, in your own test
-file alongside the supplied ones (any `spec/*.test.ts` runs with `pnpm check`).
-Some lines only a person can judge; leave those to the crit. There is no minimum
-count: select the checks that protect your work's real promises, and test the
-**contracts** — what the page must do, not how you built it — so the tests
-survive a change of approach.
+They assert the pages' `data-*` attributes (`data-course`, `data-status`,
+`data-warning`, `data-source`) rather than their wording.
+
+What no test can hold, and the crit judges: whether each hand-written reading
+is the right one, and whether the pages are clear to a student choosing
+courses.
 
 A green suite here is backpressure, not a mark: your tutor verifies what you
 deployed against the published spec at the crit, and keeping your own tests
