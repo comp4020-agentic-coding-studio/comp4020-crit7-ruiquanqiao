@@ -1,0 +1,246 @@
+{
+  "COMP6034": [
+    {
+      "text": "To enrol in this course, you must be enrolled in the Master of Computing (Advanced) and have completed COMP6800 or COMP2700 Incompatible with COMP3704",
+      "tree": "all(@VCOMP, any(COMP6800, COMP2700))",
+      "reading": "The \"and\" joins the program to the course pair; the \"or\" only offers two courses."
+    }
+  ],
+  "COMP6310": [
+    {
+      "text": "To enrol in this course you must have completed (or have an exemption for): COMP6300 AND COMP6710 or COMP1110 . You will not be able to enrol in the course if you have completed COMP2310 .",
+      "tree": "all(COMP6300, any(COMP6710, COMP1110))",
+      "reading": "The bracket is an aside about exemptions, not a condition: COMP6300 and one of the two programming courses, as the bracketed wording from 2026 states outright."
+    }
+  ],
+  "COMP6320": [
+    {
+      "text": "To enrol in this course you must have completed ( COMP6710 OR COMP7710 OR COMP1110 OR be enrolled in Master of Computing (Advanced)) AND have completed or be currently enrolled in COMP6262 OR COMP2620 Incompatible with COMP3620 .",
+      "tree": "all(any(COMP6710, COMP7710, COMP1110, @VCOMP), any(COMP6262*, COMP2620*))",
+      "reading": "The bracket closes the first group; \"have completed or be currently enrolled in\" opens the second, whose OR lists alternatives."
+    },
+    {
+      "text": "To enrol in this course you must have completed COMP6710 OR COMP1110 AND have completed or be currently enrolled in COMP6262 OR COMP2620 OR PHIL2080 . Incompatible with COMP3620 .",
+      "tree": "all(any(COMP6710, COMP1110), any(COMP6262*, COMP2620*, PHIL2080*))",
+      "reading": "Two clauses, each opened by \"have completed\"; the second also allows current enrolment. The 2026 wording brackets the same split."
+    }
+  ],
+  "COMP6442": [
+    {
+      "text": "To enrol in this course you must have either: completed ( COMP6710 OR COMP7710 OR COMP1110 OR COMP1140 ); AND have completed or be currently enrolled in ( MATH6005 OR COMP6260 OR MATH1005 OR COMP1600 ); OR be enrolled in the Master of Machine Learning and Computer Vision AND have completed ( COMP6710 or COMP7710 or COMP1110 or COMP1140 ) OR be enrolled in the Master of Computing (Advanced). Incompatible with COMP2100 .",
+      "tree": "any(all(any(COMP6710, COMP7710, COMP1110, COMP1140), any(MATH6005*, COMP6260*, MATH1005*, COMP1600*)), all(@MMLCV, any(COMP6710, COMP7710, COMP1110, COMP1140)), @VCOMP)",
+      "reading": "\"Either:\" sets up alternatives, and each \"OR be enrolled in\" starts a new pathway; the \"; AND\" binds the maths course to the first one."
+    },
+    {
+      "text": "To enrol in this course you must have either: completed COMP6700 OR COMP6710 OR COMP1110 OR COMP1140 ; AND have completed or currently be enrolled in MATH6005 OR COMP6260 OR MATH1005 OR COMP1600 ; OR be enrolled in Master of Computing (Advanced). Incompatible with COMP2100 .",
+      "tree": "any(all(any(COMP6700, COMP6710, COMP1110, COMP1140), any(MATH6005*, COMP6260*, MATH1005*, COMP1600*)), @VCOMP)",
+      "reading": "\"Either:\" sets up two pathways: the \"; AND\" binds the maths course to the programming course, and the \"; OR\" opens the VCOMP pathway."
+    }
+  ],
+  "COMP6490": [
+    {
+      "text": "To enrol in this course you must be enrolled in VCOMP OR have completed 6 units of: ( COMP6240 /2400 OR COMP6260 /1600 OR COMP6442 /2100) AND have completed 6 units of: ( COMP6730 /1730 OR COMP6710 /1110). Incompatible with COMP4650 and COMP6990 .",
+      "tree": "any(@VCOMP, all(any(COMP6240, COMP2400, COMP6260, COMP1600, COMP6442, COMP2100), any(COMP6730, COMP1730, COMP6710, COMP1110)))",
+      "reading": "The two \"have completed 6 units of\" clauses are joined by AND and together form the pathway for students not in VCOMP."
+    }
+  ],
+  "COMP6528": [
+    {
+      "text": "To enrol in this course you must be studying one of: Graduate Diploma of Computing Master of Computing Master of Computing (Advanced). Master of Machine Learning and Computer Vision Incompatible with ENGN6528 and COMP4528 and ENGN4528 .",
+      "tree": "any(@GDCP, @MCOMP, @VCOMP, @MMLCV)",
+      "reading": "\"Studying one of:\" a list of four programs whose separators were lost (one is even cut off by a full stop)."
+    },
+    {
+      "text": "To enrol in this course you must be studying one of: Master of Machine Learning and Computer Vision Master of Computing Master of Computing (Advanced). Incompatible with ENGN6528 and COMP4528 and ENGN4528 .",
+      "tree": "any(@MMLCV, @MCOMP, @VCOMP)",
+      "reading": "\"Studying one of:\" a list of three programs with the separators lost."
+    }
+  ],
+  "COMP8110": [
+    {
+      "text": "To enrol in this course you must be: studying a Master of Computing AND have completed COMP6700 OR COMP6710 OR COMP1110 OR be studying a Master of Computing (Advanced). You cannot enrol in this course if you've completed COMP3120 .",
+      "tree": "any(all(@MCOMP, any(COMP6700, COMP6710, COMP1110)), @VCOMP)",
+      "reading": "\"OR be studying\" opens a second pathway; the AND binds the Master of Computing to the course list before it."
+    }
+  ],
+  "COMP8420": [
+    {
+      "text": "To enrol in this course you must: have completed COMP6670 or COMP3670 OR be enrolled in the Master of Applied Data Analytics and have completed 6 units of ( COMP6710 or COMP6730 or COMP7230 ). Incompatible with COMP4660 and COMP8920",
+      "tree": "any(COMP6670, COMP3670, all(@MADAN, any(COMP6710, COMP6730, COMP7230)))",
+      "reading": "\"OR be enrolled in\" opens a MADAN pathway, and the lowercase \"and\" belongs to it."
+    }
+  ],
+  "COMP8490": [
+    {
+      "text": "To enrol in this course you must be enrolled in Master of Computing (Advanced) OR have completed 6 units of: ( COMP6240 /2400 OR COMP6260 /1600 OR COMP6442 /2100) AND have completed 6 units of: ( COMP6730 /1730 OR COMP6710 /1110). Incompatible with COMP4650 and COMP6490 and COMP6990 .",
+      "tree": "any(@VCOMP, all(any(COMP6240, COMP2400, COMP6260, COMP1600, COMP6442, COMP2100), any(COMP6730, COMP1730, COMP6710, COMP1110)))",
+      "reading": "Same wording as COMP6490, its co-taught twin: VCOMP, or both \"6 units of\" clauses."
+    }
+  ],
+  "COMP8500": [
+    {
+      "text": "To enrol in this course you must: be enrolled in the Master of Computing AND have successfully completed: ( COMP6442 or COMP2100 ) AND ( COMP8260 or COMP8280 ) AND be concurrently enrolled in or have successfully completed: COMP6120 or COMP2120 OR be enrolled in the Master of Machine Learning and Computer Vision AND have successfully completed: ( COMP6442 or COMP2100 ) AND ( COMP6250 or COMP8260 or COMP8280 ) Incompatible with COMP8755 and COMP8830 and COMP8800 and COMP8715",
+      "tree": "any(all(@MCOMP, any(COMP6442, COMP2100), any(COMP8260, COMP8280), any(COMP6120*, COMP2120*)), all(@MMLCV, any(COMP6442, COMP2100), any(COMP6250, COMP8260, COMP8280)))",
+      "reading": "Each \"be enrolled in the Master of ...\" starts a pathway; within one, the ANDs bind the course groups."
+    }
+  ],
+  "COMP8535": [
+    {
+      "text": "To enrol in this course you must be studying: Master of Computing (Advanced) OR Master of Machine Learning and Computer Vision AND have completed 12 units of 6000-level COMP coded courses.",
+      "tree": "all(any(@VCOMP, @MMLCV), units(12, 6000, COMP))",
+      "reading": "\"Studying: A OR B\" is a list of programs, and the AND that follows applies to both."
+    }
+  ],
+  "COMP8536": [
+    {
+      "text": "To enrol in this course you must be studying Master of Engineering or Master of Machine Learning and Computer Vision or Master of Computing (Advanced). Students must have completed either COMP6710 or COMP6730 or equivalent.",
+      "tree": "all(any(@MENG, @MMLCV, @VCOMP), any(COMP6710, COMP6730))",
+      "reading": "Two sentences, both required. \"Or equivalent\" can't be checked here and is shown as a caveat."
+    }
+  ],
+  "COMP8600": [
+    {
+      "text": "To enrol in this course you must have completed COMP6670 or COMP3670 OR ( COMP6710 or COMP6730 or COMP7230 or COMP1110 or COMP1730 ) and ( COMP8410 or COMP8910 or COMP3425 ) and ( STAT6039 or STAT7039 ) Incompatible with COMP4670 and COMP8960 .",
+      "tree": "any(COMP6670, COMP3670, all(any(COMP6710, COMP6730, COMP7230, COMP1110, COMP1730), any(COMP8410, COMP8910, COMP3425), any(STAT6039, STAT7039)))",
+      "reading": "Read in parallel with COMP8880, which states the same structure with a \";\": COMP6670 alone, or all three bracketed groups."
+    },
+    {
+      "text": "To enrol in this course you must have completed COMP6670 or COMP3670 OR COMP6710 or COMP6730 or COMP7230 or COMP1110 or COMP1730 AND COMP8410 or COMP8910 or COMP3425 AND STAT6039 . Incompatible with COMP4670 and COMP8960 .",
+      "tree": "any(COMP6670, COMP3670, all(any(COMP6710, COMP6730, COMP7230, COMP1110, COMP1730), any(COMP8410, COMP8910, COMP3425), STAT6039))",
+      "reading": "Later handbooks bracket the same three groups: COMP6670 (or COMP3670) alone, or one course from each group."
+    }
+  ],
+  "COMP8610": [
+    {
+      "text": "To enrol in this course you must: be studying VCOMP OR be studying MMLCV and have completed COMP6710 or COMP1110 or COMP1140 OR have completed ( COMP6710 or COMP1110 or COMP1140 ) and have completed ( COMP6390 or COMP6442 or COMP6540 or COMP6780 or COMP6720 ). You are not able to enrol in this course if you have successfully completed COMP4610 or COMP6461 .",
+      "tree": "any(@VCOMP, all(@MMLCV, any(COMP6710, COMP1110, COMP1140)), all(any(COMP6710, COMP1110, COMP1140), any(COMP6390, COMP6442, COMP6540, COMP6780, COMP6720)))",
+      "reading": "Three pathways, each opened by \"OR be studying\" or \"OR have completed\"; the lowercase \"and\" binds inside a pathway."
+    }
+  ],
+  "COMP8703": [
+    {
+      "text": "To enrol in this course, you must be enrolled in the Master of Computing (Advanced) and have completed COMP6034 or COMP3704 . Incompatible with COMP3703 and COMP4703 .",
+      "tree": "all(@VCOMP, any(COMP6034, COMP3704))",
+      "reading": "The \"and\" joins the program to the course pair, as in COMP6034."
+    }
+  ],
+  "COMP8715": [
+    {
+      "text": "To enrol in this course you must meet the eligibility criteria, which includes membership of a student project group before the end of week 1, where the project has been approved by the convener. To enrol in this course you must: be enrolled in the Master of Computing AND have successfully completed: COMP6442 or COMP2100 AND ( COMP8260 or COMP8280 ) OR be enrolled in the Master of Machine Learning and Computer Vision AND have successfully completed: ( COMP6442 or COMP2100 ) AND ( COMP6250 or COMP8260 or COMP8280 ) Incompatible with COMP8755 and COMP8830 and COMP8800",
+      "tree": "any(all(@MCOMP, any(COMP6442, COMP2100), any(COMP8260, COMP8280)), all(@MMLCV, any(COMP6442, COMP2100), any(COMP6250, COMP8260, COMP8280)))",
+      "reading": "The MMLCV pathway brackets (COMP6442 or COMP2100); the MCOMP one is read the same way. Group membership and convener approval are caveats."
+    },
+    {
+      "text": "To enrol in this course you must meet the eligibility criteria, which includes membership of a student project group before the end of week 1, where the project has been approved by the convener. To enrol in this course you must: be enrolled in the Master of Computing AND have successfully completed: COMP6442 or COMP2100 AND COMP8260 OR be enrolled in the Master of Machine Learning and Computer Vision AND have successfully completed: COMP6710 or COMP6730 or COMP1110 AND COMP6250 or COMP8260 or ENGN6250 or ENGN8260 Incompatible with COMP8755 and COMP8830 and COMP8800",
+      "tree": "any(all(@MCOMP, any(COMP6442, COMP2100), COMP8260), all(@MMLCV, any(COMP6710, COMP6730, COMP1110), any(COMP6250, COMP8260, ENGN6250, ENGN8260)))",
+      "reading": "Each \"be enrolled in the Master of\" opens a pathway; inside one, AND separates course groups whose \"or\" lists alternatives. Group membership and convener approval are caveats."
+    },
+    {
+      "text": "To enrol in this course you must meet the eligibility criteria, which include membership of a student project group before the end of week 1, where the project has been approved by the convener. To enrol in this course you must: be enrolled in the Master of Computing (MCOMP) AND have successfully completed: ( COMP6442 or COMP2100 ) AND ( COMP6250 or COMP8260 or COMP8280 ) AND have successfully completed or be currently enrolled in ( COMP2120 or COMP6120 ) OR be enrolled in the Master of Machine Learning and Computer Vision (MMLCV) AND have successfully completed: ( COMP6442 or COMP2100 ) AND ( COMP6250 or COMP8260 or COMP8280 ) Incompatible with COMP8755 and COMP8830 and COMP8800 .",
+      "tree": "any(all(@MCOMP, any(COMP6442, COMP2100), any(COMP6250, COMP8260, COMP8280), any(COMP2120*, COMP6120*)), all(@MMLCV, any(COMP6442, COMP2100), any(COMP6250, COMP8260, COMP8280)))",
+      "reading": "Each \"be enrolled in the Master of\" opens a pathway; inside one, the bracketed groups are joined by AND. Group membership and convener approval are caveats."
+    }
+  ],
+  "COMP8755": [
+    {
+      "text": "To enrol in this course you must: be enrolled in the Master of Computing AND have completed COMP8260 AND have completed COMP6442 AND receive a permission code by completing the steps listed on Enrolling in student projects including the Student Project Registration Form. Incompatible with COMP8715 and COMP8830 .",
+      "tree": "all(@MCOMP, COMP8260, COMP6442)",
+      "reading": "Every clause is joined by AND. The permission code can't be checked here and is a caveat."
+    }
+  ],
+  "COMP8800": [
+    {
+      "text": "To enrol in this course you must: be enrolled in the Master of Computing (Advanced) OR Master of Machine Learning and Computer Vision AND have completed or be currently enrolled in COMP6445 AND have completed ( COMP8280 or COMP8260 or COMP6250 ) AND have completed 36 units of COMP courses AND have a GPA of 6 out of 7 AND receive a permission code by completing the steps listed on Enrolling in student projects and having submitted the Student Project Registration Form. Incompatible with COMP8715 and COMP8830 .",
+      "tree": "all(any(@VCOMP, @MMLCV), COMP6445*, any(COMP8280, COMP8260, COMP6250), units(36, 1000, COMP))",
+      "reading": "Programs first, then every \"AND have\" clause applies. The GPA of 6 and the permission code can't be checked here and are caveats."
+    },
+    {
+      "text": "To enrol in this course you must: be enrolled in the Master of Computing (Advanced) AND have completed COMP6445 AND COMP6442 AND COMP8260 AND recieve a permission code by completing the steps listed on Enrolling in student projects and having submitted the Student Project Registration Form OR be enrolled in the Master of Machine and Computer Learning AND have completed ( COMP6710 OR COMP6730 ) AND ( COMP6250 OR COMP8260 ) AND have completed OR be currently enrolled in COMP6445 AND receive a permission code by completing the steps listed on Enrolling in student projects and having submitted the Student Project Registration Form Incompatible with COMP8715 . You also need to have a signed 'Independent Study contract' with a supervisor before the start of the semester in which you plan to start your project.",
+      "tree": "any(all(@VCOMP, COMP6445, COMP6442, COMP8260), all(@MMLCV, any(COMP6710, COMP6730), any(COMP6250, COMP8260), COMP6445*))",
+      "reading": "Two pathways split at \"OR be enrolled in\". \"Master of Machine and Computer Learning\" names no real program and is read as the Master of Machine Learning and Computer Vision. The permission code is a caveat."
+    },
+    {
+      "text": "To enrol in this course you must: be enrolled in the Master of Computing (Advanced) AND have successfully completed COMP6445 AND COMP6442 AND ( COMP6250 OR COMP8260 ) AND have a GPA equivalent to an ANU 70 per cent calculated AND receive a permission code by completing the steps listed on Enrolling in student projects and having submitted the Student Project Registration Form OR be enrolled in the Master of Machine and Computer Learning AND have completed ( COMP6710 OR COMP6730 ) AND ( COMP6250 OR COMP8260 ) AND have a GPA equivalent to an ANU 70 per cent calculated AND have completed OR be currently enrolled in COMP6445 AND receive a permission code by completing the steps listed on Enrolling in student projects and having submitted the Student Project Registration Form Incompatible with COMP8715 .",
+      "tree": "any(all(@VCOMP, COMP6445, COMP6442, any(COMP6250, COMP8260)), all(@MMLCV, any(COMP6710, COMP6730), any(COMP6250, COMP8260), COMP6445*))",
+      "reading": "Two pathways split at \"OR be enrolled in\"; \"Master of Machine and Computer Learning\" is read as MMLCV. The GPA of 70 per cent and the permission code are caveats."
+    }
+  ],
+  "COMP8830": [
+    {
+      "text": "To enrol in this course you must: Be enrolled in the Master of Computing (MCOMP) and have successfully completed: COMP8260 and COMP6442 OR Be enrolled in the Master of Machine Learning and Computer Vision (MMLCV) and have successfully completed: COMP6710 and ( COMP6250 OR COMP8260 ) Incompatible with COMP8715 and COMP8755 and COMP8800 . You will need to undergo competitive entry to enrol in this course.",
+      "tree": "any(all(@MCOMP, COMP8260, COMP6442), all(@MMLCV, COMP6710, any(COMP6250, COMP8260)))",
+      "reading": "Each \"Be enrolled in\" opens a pathway. For the Master of Computing it names COMP8260, the professional-practice course before 2026; the 2027 wording adds COMP8280, its replacement, so this 2026 wording looks as if it had not caught up. It is applied literally to courses taken in 2026."
+    },
+    {
+      "text": "To enrol in this course you must - be enrolled in the Master of Computing AND have successfully completed COMP8260 and COMP6442 , OR - be enrolled in the Master of Machine Learning and Computer Vision AND have successfully completed: COMP6710 OR COMP6730 , AND COMP6250 OR COMP8260 OR ENGN6250 OR ENGN8260 . Incompatible with COMP8715 and COMP8755 . You will need to undergo competitive entry to enrol in this course, please see CECS webpage for more information.",
+      "tree": "any(all(@MCOMP, COMP8260, COMP6442), all(@MMLCV, any(COMP6710, COMP6730), any(COMP6250, COMP8260, ENGN6250, ENGN8260)))",
+      "reading": "The dashes mark two pathways; in the MMLCV one, the comma before \"AND\" closes the first list. Competitive entry is a caveat."
+    },
+    {
+      "text": "To enrol in this course you must: Be enrolled in the Master of Computing (MCOMP) or Master of Machine Learning and Computer Vision (MMLCV) and have successfully completed: COMP6442 and ( COMP8280 or COMP6250 or COMP8260 ) Incompatible with COMP8715 and COMP8755 and COMP8800 . You will need to undergo competitive entry to enrol in this course.",
+      "tree": "all(any(@MCOMP, @MMLCV), COMP6442, any(COMP8280, COMP6250, COMP8260))",
+      "reading": "The two programs are alternatives, and \"and have successfully completed\" applies to both. Competitive entry is a caveat."
+    }
+  ],
+  "COMP8920": [
+    {
+      "text": "To enrol in this course you must have either completed COMP6670 OR (be enrolled in the Master of Applied Data Analytics and have completed 6 units of either COMP6710 or COMP6730 or COMP7230 ).",
+      "tree": "any(COMP6670, all(@MADAN, any(COMP6710, COMP6730, COMP7230)))",
+      "reading": "The bracket holds the MADAN pathway, and its \"and\" binds the program to the course list."
+    }
+  ],
+  "COMP8960": [
+    {
+      "text": "To enrol in this course you must have completed COMP6670 OR (6 units of (either COMP6710 or COMP6730 or COMP7230 ) and COMP8410 and STAT6039 ) AND be enrolled in the Master of Applied Data Analytics. Incompatible with COMP4670 and COMP8600 .",
+      "tree": "all(any(COMP6670, all(any(COMP6710, COMP6730, COMP7230), COMP8410, STAT6039)), @MADAN)",
+      "reading": "The bracket closes the second pathway before \"AND be enrolled\", so the MADAN condition applies to both, as the wording of its successor COMP8980 confirms."
+    }
+  ],
+  "COMP8980": [
+    {
+      "text": "To enrol in this course you must have completed COMP6670 OR ( COMP6710 or COMP6730 or COMP7230 ) AND COMP8410 AND STAT6039 AND be enrolled in MADAN. Incompatible with COMP4880 and COMP8880 .",
+      "tree": "all(@MADAN, any(COMP6670, all(any(COMP6710, COMP6730, COMP7230), COMP8410, STAT6039)))",
+      "reading": "COMP8980 is the MADAN twin of COMP8880 (the two are incompatible), so the program condition applies to both of COMP8880's pathways."
+    }
+  ],
+  "ENGN8100": [
+    {
+      "text": "To enrol in this course you must be studying Master of Engineering, Master of Project Management, Master of Business Information Systems or Graduate Certificate in Nuclear Technology and Regulation.",
+      "tree": "any(@MENG, @MPM, @MBIS, @GCNTR)",
+      "reading": "A comma-separated list of four programs, the last joined by \"or\"."
+    },
+    {
+      "text": "To enrol in this course you must be studying Master of Engineering, Master of Computing, Master of Computing (Advanced), Master of Project Management, Master of Business Information Systems or Graduate Certificate in Nuclear Technology and Regulation.",
+      "tree": "any(@MENG, @MCOMP, @VCOMP, @MPM, @MBIS, @GCNTR)",
+      "reading": "A comma-separated list of programs, the last joined by \"or\". From 2026 it includes the Master of Computing."
+    }
+  ],
+  "INFS8205": [
+    {
+      "text": "To enrol in this course, you must have:be enrolled in one of the following programs: MMGNT - Master of Management ,or have completed at least one of the following courses: INFS8004 - Enterprise Systems INFS8008 - Intelligent Business Analysis INFS8210 - Business Analytics .",
+      "tree": "any(@MMGNT, INFS8004, INFS8008, INFS8210)",
+      "reading": "\"One of the following programs\" (only the Master of Management), \"or\" at least one of three listed courses."
+    }
+  ],
+  "LAWS8445": [
+    {
+      "text": "To enrol in this course you must be studying a; Master of Laws (MLLM) and have completed or be completing LAWS8586 Law and Legal Institutions; or Graduate Certificate of Law (CLAW) and have completed or be completing LAWS8586 Law and Legal Institutions; or Graduate Certificate of New Technologies Law; or Juris Doctor (MJD) and have completed or be completing five 6100 level LAWS courses; or Master of Financial Management and Law (MFIML) and have completed or be completing LAWS8586 Law and Legal Institutions. You are not able to enrol in this course if you have previously completed LAWS4245 Information Technology Law. Students undertaking any ANU graduate program may apply for this course. Enrolments are accepted on a case-by-case basis. Please contact the ANU College of Law for appropriate permission.",
+      "tree": "any(all(@MLLM, LAWS8586*), all(@CLAW, LAWS8586*), @GCNTL, all(@MJD, units(30, 6000, LAWS)), all(@MFIML, LAWS8586*))",
+      "reading": "Five program pathways separated by \"; or\". \"Five 6100-level LAWS courses\" is approximated as 30 units of LAWS at 6000-level or above. Any graduate student may also apply case by case, which is a caveat."
+    }
+  ],
+  "STAT6039": [
+    {
+      "text": "To enrol in this course, you must be enrolled in the M. Statistical Data Analysis, M. Actuarial Studies, M. Actuarial Practice, M. Statistics, MSc in Quantitative Biology and Bioinformatics or MSc in Quantitative Biology and Bioinformatics (Advanced). Students enrolled in M. Applied Data Analytics must have completed STAT7055 . Incompatible with STAT2001 , STAT2013 and STAT6013 .",
+      "tree": "any(@STATS, all(@MADAN, STAT7055))",
+      "reading": "A list of statistics, actuarial and bioinformatics masters (the \"M.\" abbreviations broke the sentence), or MADAN with STAT7055."
+    }
+  ],
+  "STAT7039": [
+    {
+      "text": "To enrol in this course, you must be enrolled in the M. Statistical Data Analytics, M. Actuarial Studies, M. Actuarial Practice, M. Statistics, MSc in Quantitative Biology and Bioinformatics, or MSc in Quantitative Biology and Bioinformatics (Advanced). Students enrolled in M. Applied Data Analytics must have completed STAT7055 . Incompatible with STAT2001 , STAT2013 and STAT6013 .",
+      "tree": "any(@STATS, all(@MADAN, STAT7055))",
+      "reading": "A list of statistics, actuarial and bioinformatics masters (the \"M.\" abbreviations broke the sentence), or MADAN with STAT7055."
+    }
+  ]
+}

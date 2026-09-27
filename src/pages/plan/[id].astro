@@ -1,8 +1,17 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { listedCourses } from "../../lib/catalog";
-import { EXAMPLE_ID, getPlan, judgedItems, termLabel, termSession, termsFrom } from "../../lib/planner";
-import { MCOMP_SOURCE, MCOMP_UNCHECKED, mcompProgress } from "../../lib/programs";
+import { coursesIn, handbookYearFor } from "../../lib/catalog";
+import {
+  EXAMPLE_ID,
+  getPlan,
+  judgedItems,
+  planTerms,
+  termLabel,
+  termSession,
+  termStatus,
+  termYear,
+} from "../../lib/planner";
+import { progress, type Row } from "../../lib/programs";
 
 const plan = getPlan(Astro.params.id ?? "");
 if (!plan) {
@@ -11,14 +20,16 @@ if (!plan) {
 const readOnly = plan.id === EXAMPLE_ID;
 const mine = Astro.cookies.get("plan")?.value === plan.id;
 const items = judgedItems(plan);
-const terms = termsFrom(plan.startTerm);
-const beyond = items.filter((i) => !terms.includes(i.term));
-const progress = mcompProgress(items);
+const terms = planTerms(plan.startTerm, items);
+const result = progress(plan, items);
 const problems = items.reduce((n, i) => n + i.warnings.length, 0);
-const inPlan = new Set(items.map((i) => i.courseCode));
-const addable = listedCourses().filter((c) => !inPlan.has(c.code));
 const action = `/api/plans/${plan.id}/items`;
 const back = `/plan/${plan.id}`;
+const specialisations = result.set?.specialisations.filter((s) => s.offered) ?? [];
+const statusLabel = { past: "Completed", current: "In progress", future: "" };
+
+const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
+  rows.flatMap((row) => [{ ...row, depth }, ...flatten(row.children ?? [], depth + 1)]);
 ---
 
 <Base title={readOnly ? "Example plan" : "My plan"} wide>
@@ -28,7 +39,7 @@ const back = `/plan/${plan.id}`;
     {
       readOnly
         ? " A complete path that clears every check. Copy it to change it."
-        : " Add courses to a semester and each one is checked against the handbook's rules for when it runs and what it needs first."
+        : " Each course is checked against the handbook of the year you'd take it; the degree against the handbook of the year you started."
     }
   </p>
 
@@ -46,7 +57,7 @@ const back = `/plan/${plan.id}`;
       )
     }
     <p class="summary" data-problems={problems}>
-      {items.length} courses · {problems === 0 ? "no problems found" : `${problems} problem${problems > 1 ? "s" : ""} found`}
+      {items.length} placements · {problems === 0 ? "no problems found" : `${problems} problem${problems > 1 ? "s" : ""} found`}
     </p>
   </div>
 
@@ -55,22 +66,34 @@ const back = `/plan/${plan.id}`;
       {
         terms.map((term) => {
           const here = items.filter((i) => i.term === term);
-          const units = here.reduce((sum, i) => sum + i.course.units, 0);
+          const units = here.reduce((sum, i) => sum + i.units, 0);
+          const status = termStatus(term);
           const headingId = `term-${term}`;
+          const handbookYear = handbookYearFor(termYear(term));
+          const addable = coursesIn(handbookYear).filter((c) => !here.some((i) => i.courseCode === c.code));
           return (
-            <section class="term" aria-labelledby={headingId} data-term={term}>
+            <section class="term" aria-labelledby={headingId} data-term={term} data-status={status}>
               <h2 id={headingId}>
-                {termLabel(term)} <span class="term-units">{units} units</span>
+                <span>
+                  {termLabel(term)}
+                  {statusLabel[status] && <span class="term-status">{statusLabel[status]}</span>}
+                </span>
+                <span class="term-units">{units} units</span>
               </h2>
               {units > 24 && <p class="overload">More than the usual full-time load of 24 units.</p>}
               <ul class="term-items">
                 {here.map((item) => (
-                  <li class="plan-item" data-course={item.courseCode} data-status={item.warnings.length ? "warn" : "ok"}>
+                  <li
+                    class="plan-item"
+                    data-course={item.courseCode}
+                    data-item={item.id}
+                    data-status={item.warnings.length ? "warn" : "ok"}
+                  >
                     <div class="plan-item-head">
-                      <a href={`/course/${item.courseCode}`}>
-                        <span class="code">{item.courseCode}</span> {item.course.name}
+                      <a href={`/course/${item.courseCode}?year=${item.resolved.year}`}>
+                        <span class="code">{item.courseCode}</span> {item.resolved.version?.name ?? item.course.name}
                       </a>
-                      <span class="item-units">{item.course.units}u</span>
+                      <span class="item-units">{item.units}u</span>
                     </div>
                     {item.warnings.length > 0 && (
                       <ul class="warnings">
@@ -79,18 +102,23 @@ const back = `/plan/${plan.id}`;
                         ))}
                       </ul>
                     )}
-                    {item.course.caveat && item.warnings.length === 0 && (
+                    {item.resolved.assumed && item.resolved.version && (
+                      <p class="item-note">
+                        Judged by the {item.resolved.year} handbook; {termYear(term)}'s isn't published yet.
+                      </p>
+                    )}
+                    {item.resolved.version?.caveat && item.warnings.length === 0 && (
                       <p class="item-note">Also needs something this site can't check; see the course page.</p>
                     )}
                     {!readOnly && (
                       <div class="item-controls">
                         <form method="post" action={action}>
-                          <input type="hidden" name="course" value={item.courseCode} />
+                          <input type="hidden" name="item" value={item.id} />
                           <input type="hidden" name="back" value={back} />
-                          <label class="visually-hidden" for={`move-${item.courseCode}`}>
+                          <label class="visually-hidden" for={`move-${item.id}`}>
                             Move {item.courseCode} to
                           </label>
-                          <select id={`move-${item.courseCode}`} name="term">
+                          <select id={`move-${item.id}`} name="term">
                             {terms.map((t) => (
                               <option value={t} selected={t === term}>
                                 {termLabel(t)}
@@ -100,7 +128,7 @@ const back = `/plan/${plan.id}`;
                           <button>Move</button>
                         </form>
                         <form method="post" action={action}>
-                          <input type="hidden" name="course" value={item.courseCode} />
+                          <input type="hidden" name="item" value={item.id} />
                           <input type="hidden" name="back" value={back} />
                           <input type="hidden" name="remove" value="1" />
                           <button class="quiet">Remove</button>
@@ -117,12 +145,16 @@ const back = `/plan/${plan.id}`;
                   <label for={`add-${term}`}>Add a course</label>
                   <select id={`add-${term}`} name="course" required>
                     <option value="">Choose…</option>
-                    {addable.map((c) => (
-                      <option value={c.code}>
-                        {c.code} {c.name}
-                        {c.sessions.includes(termSession(term)) ? "" : ` (not in ${termSession(term)})`}
-                      </option>
-                    ))}
+                    {addable.map((c) => {
+                      const v = c.versions.get(handbookYear);
+                      const note = !v?.sessions.length ? " (not offered)" : v.sessions.includes(termSession(term)) ? "" : ` (not in ${termSession(term)})`;
+                      return (
+                        <option value={c.code}>
+                          {c.code} {v?.name}
+                          {note}
+                        </option>
+                      );
+                    })}
                   </select>
                   <button>Add</button>
                 </form>
@@ -131,31 +163,38 @@ const back = `/plan/${plan.id}`;
           );
         })
       }
-      {
-        beyond.length > 0 && (
-          <section class="term" aria-labelledby="beyond-heading">
-            <h2 id="beyond-heading">Outside these four semesters</h2>
-            <ul class="term-items">
-              {beyond.map((item) => (
-                <li class="plan-item">
-                  <a href={`/course/${item.courseCode}`} class="code">
-                    {item.courseCode}
-                  </a>{" "}
-                  {termLabel(item.term)}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )
-      }
     </div>
 
     <aside class="progress" aria-labelledby="progress-heading">
       <h2 id="progress-heading">Towards the degree</h2>
-      <ul>
+      <p class="progress-basis">
+        By the rules of the {result.year} handbook{result.assumed ? `, the closest to your ${termYear(plan.startTerm)} start` : ", the year you started"}.
+      </p>
+
+      {
+        readOnly ? (
+          <p>Specialisation: {result.specialisation?.name ?? "none chosen"}</p>
+        ) : (
+          <form method="post" action={`/api/plans/${plan.id}/specialisation`} class="spec-form">
+            <label for="specialisation">Specialisation</label>
+            <select id="specialisation" name="specialisation">
+              <option value="">Not chosen yet</option>
+              {specialisations.map((s) => (
+                <option value={s.code} selected={s.code === plan.specialisation}>
+                  {s.name}
+                  {s.encoded ? "" : ` (no rules published in ${result.year})`}
+                </option>
+              ))}
+            </select>
+            <button>Set</button>
+          </form>
+        )
+      }
+
+      <ul class="progress-rows">
         {
-          progress.map((r) => (
-            <li data-met={r.met ? "yes" : "no"}>
+          flatten(result.rows).map((r) => (
+            <li data-met={r.met ? "yes" : "no"} data-depth={r.depth} data-kind={r.kind}>
               <span class="req-mark" aria-hidden="true">
                 {r.met ? "✓" : "✗"}
               </span>
@@ -169,8 +208,12 @@ const back = `/plan/${plan.id}`;
           ))
         }
       </ul>
-      <p class="unchecked">Not checked here: {MCOMP_UNCHECKED.join("; ")}.</p>
-      <p><a href={MCOMP_SOURCE}>The program's full rules on Programs and Courses</a></p>
+      {result.set?.reading && <p class="reading">{result.set.reading}</p>}
+      {result.specialisation?.reading && <p class="reading">{result.specialisation.reading}</p>}
+      <p class="unchecked">
+        Not checked here: permission codes, GPA thresholds, and credit for study done elsewhere.
+      </p>
+      <p><a href={result.sourceUrl}>The {result.year} program rules on Programs and Courses</a></p>
     </aside>
   </div>
 

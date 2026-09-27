@@ -1,21 +1,23 @@
-// One-off snapshot of Programs and Courses into data/catalog.json. Run by hand
-// (`pnpm scrape`); the build and the server never touch the network, so the app
-// can't break because P&C is slow, down, or has changed its markup.
-import { writeFileSync } from "node:fs";
+// Snapshot of Programs and Courses, one file per handbook year, into
+// data/handbook/<year>.json. Run by hand (`pnpm scrape [years...]`); the build
+// and the server never touch the network, so the app can't break because P&C
+// is slow, down, or has changed its markup.
+//
+// Rules differ by year and apply by different years: a course is judged by the
+// handbook of the year it is taken, a degree by the handbook of the year the
+// student started. So every year a live plan can touch is kept, not just the
+// latest.
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const BASE = "https://programsandcourses.anu.edu.au";
-const YEAR = 2026;
-const DELAY_MS = 1000;
+const PROGRAM = "7706XMCOMP";
+const DELAY_MS = 800;
+const years = process.argv.slice(2).map(Number);
+if (years.length === 0) years.push(2024, 2025, 2026, 2027);
 
-type ListItem = {
-  CourseCode: string;
-  Name: string;
-  Session: string;
-  Career: string;
-  Units: number;
-};
+type ListItem = { CourseCode: string; Name: string; Session: string; Career: string; Units: number };
 
-type ScrapedCourse = {
+export type ScrapedCourse = {
   code: string;
   name: string;
   units: number;
@@ -23,10 +25,38 @@ type ScrapedCourse = {
   sessions: string[];
   description: string;
   requisiteText: string;
-  referencedCodes: string[];
+};
+
+export type ScrapedSpecialisation = {
+  code: string;
+  name: string;
+  requirementText: string;
+  courses: string[];
+  missing?: boolean;
+};
+
+export type ScrapedProgram = {
+  code: string;
+  name: string;
+  requirementText: string;
+  specialisations: ScrapedSpecialisation[];
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function get(path: string): Promise<string | null> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch(`${BASE}${path}`, { redirect: "manual" });
+      await sleep(DELAY_MS);
+      if (res.status === 200) return await res.text();
+      if (res.status === 301 || res.status === 302 || res.status === 404) return null;
+    } catch {
+      await sleep(DELAY_MS * attempt * 2);
+    }
+  }
+  throw new Error(`${path}: failed three times`);
+}
 
 function decode(text: string): string {
   return text
@@ -40,7 +70,12 @@ function decode(text: string): string {
 }
 
 function toText(html: string): string {
-  return decode(html.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]*>/g, " "))
+  return decode(
+    html
+      .replace(/<br\s*\/?>/gi, " ")
+      .replace(/<\/(p|li|div|h\d)>/gi, " ")
+      .replace(/<[^>]*>/g, " "),
+  )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -55,92 +90,128 @@ const SESSION_NAMES: Record<string, string> = {
 };
 
 function parseSessions(raw: string): string[] {
-  return raw
-    .split("/")
-    .map((s) => SESSION_NAMES[s.trim()])
-    .filter((s): s is string => Boolean(s));
+  const found = raw.match(/(First|Second) Semester|(Summer|Autumn|Winter|Spring) Session/g) ?? [];
+  return [...new Set(found.map((s) => SESSION_NAMES[s]))];
 }
 
-async function listCourses(search: string): Promise<ListItem[]> {
+const codesIn = (html: string) => [...new Set([...html.matchAll(/\/course\/([A-Z]{4}\d{4})/g)].map((m) => m[1]))];
+
+async function listCourses(year: number): Promise<ListItem[]> {
   const params = new URLSearchParams({
     AppliedFilter: "FilterByCourses",
     ShowAll: "true",
     PageIndex: "0",
     MaxPageSize: "10",
     PageSize: "Infinity",
-    SearchText: search,
-    SelectedYear: String(YEAR),
+    SearchText: "COMP",
+    SelectedYear: String(year),
     CollegeName: "All Colleges",
     ModeOfDelivery: "All Modes",
   });
-  const res = await fetch(`${BASE}/data/CourseSearch/GetCourses?${params}`);
-  if (!res.ok) throw new Error(`course list: HTTP ${res.status}`);
-  const body = (await res.json()) as { Items: ListItem[] };
-  return body.Items;
+  const body = await get(`/data/CourseSearch/GetCourses?${params}`);
+  if (!body) throw new Error(`${year}: no course list`);
+  return (JSON.parse(body) as { Items: ListItem[] }).Items;
 }
 
-async function scrapeCourse(code: string, listed?: ListItem): Promise<ScrapedCourse | null> {
-  const res = await fetch(`${BASE}/${YEAR}/course/${code}`);
-  if (!res.ok) return null;
-  const html = await res.text();
-
+async function scrapeCourse(year: number, code: string, listed?: ListItem) {
+  const html = await get(`/${year}/course/${code}`);
+  if (!html) return null;
   const title = html.match(/intro__degree-title__component">([^<]*)</)?.[1];
   if (!title) return null;
   const units = Number(html.match(/Unit Value<\/span>\s*([\d.]+)\s*units/)?.[1] ?? listed?.Units ?? 6);
   const career = html.match(/Academic career<\/span>\s*<span[^>]*>([^<]*)</)?.[1]?.trim();
   const offeredIn = html.match(/Offered in<\/span>\s*<span[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? "";
-  const description = toText(html.match(/<div class="introduction" id="introduction">([\s\S]*?)<\/div>/)?.[1] ?? "");
   const requisiteHtml = html.match(/<div class="requisite">([\s\S]*?)<\/div>/)?.[1] ?? "";
-  const referencedCodes = [...requisiteHtml.matchAll(/\/course\/([A-Z]{4}\d{4})/g)].map((m) => m[1]);
-
-  const sessionsFromPage = [...offeredIn.matchAll(/(First|Second) Semester|(Summer|Autumn|Winter|Spring) Session/g)].map((m) =>
-    m[0],
-  );
-
-  return {
+  const course: ScrapedCourse = {
     code,
     name: decode(title.trim()),
     units,
     career: listed?.Career ?? (career === "PGRD" ? "Postgraduate" : career === "UGRD" ? "Undergraduate" : (career ?? "")),
-    sessions: listed ? parseSessions(listed.Session) : [...new Set(parseSessions(sessionsFromPage.join("/")))],
-    description,
+    sessions: parseSessions(listed ? listed.Session.split("/").join(" ") : offeredIn),
+    description: toText(html.match(/<div class="introduction" id="introduction">([\s\S]*?)<\/div>/)?.[1] ?? ""),
     requisiteText: toText(requisiteHtml),
-    referencedCodes: [...new Set(referencedCodes)],
   };
+  return { course, referenced: codesIn(requisiteHtml) };
 }
 
-const listed = (await listCourses("COMP")).filter((c) => c.Career === "Postgraduate" && c.CourseCode.startsWith("COMP"));
-console.log(`list: ${listed.length} postgraduate COMP courses`);
-
-const courses = new Map<string, ScrapedCourse>();
-for (const item of listed) {
-  const course = await scrapeCourse(item.CourseCode, item);
-  if (course) courses.set(course.code, course);
-  else console.warn(`  ${item.CourseCode}: no page`);
-  await sleep(DELAY_MS);
+function section(html: string, startId: string): string {
+  const start = html.indexOf(`id="${startId}"`);
+  if (start < 0) return "";
+  const rest = html.slice(start);
+  const end = rest.search(/<h2 id="(?!program-requirements)[^"]*"|<a class="back-to-top"/);
+  return rest.slice(rest.indexOf(">") + 1, end > 0 ? end : undefined);
 }
 
-// One more hop: postgraduate courses the requisites point at but the COMP list
-// didn't include (MATH6005, STAT6039...). Undergraduate codes stay as stubs.
-const pending = new Set<string>(["MATH6005"]);
-for (const course of courses.values()) {
-  for (const code of course.referencedCodes) {
-    if (!courses.has(code) && Number(code.slice(4, 5)) >= 6) pending.add(code);
+async function scrapeProgram(year: number): Promise<ScrapedProgram> {
+  const html = await get(`/${year}/program/${PROGRAM}`);
+  if (!html) throw new Error(`${year}: no ${PROGRAM} page`);
+  const name = decode(html.match(/intro__degree-title__component">([^<]*)</)?.[1]?.trim() ?? "Master of Computing");
+  const requirements = toText(section(html, "program-requirements"));
+  // Links carry the year in some handbooks and not in others. The 2027 page
+  // also links only six of the seven specialisations its requirements name,
+  // so any known specialisation named in the text is tried as well.
+  const linked = [...html.matchAll(/\/specialisation\/([A-Z]+-SPEC)/g)].map((m) => m[1]);
+  const named = [...knownSpecialisations].filter(([, specName]) => requirements.includes(specName)).map(([code]) => code);
+  const specialisations: ScrapedSpecialisation[] = [];
+  for (const code of [...new Set([...linked, ...named])]) {
+    const page = await get(`/${year}/specialisation/${code}`);
+    if (!page) {
+      // named by the program but unpublished this year: kept, with no rules,
+      // rather than silently dropped or filled in from another year
+      specialisations.push({ code, name: knownSpecialisations.get(code) ?? code, requirementText: "", courses: [], missing: true });
+      continue;
+    }
+    const reqHtml = section(page, "requirements");
+    const specName = decode(page.match(/intro__degree-title__component">([^<]*)</)?.[1]?.trim() ?? code);
+    knownSpecialisations.set(code, specName.replace(/-/g, " "));
+    specialisations.push({ code, name: specName, requirementText: toText(reqHtml), courses: codesIn(reqHtml) });
+  }
+  return { code: "MCOMP", name, requirementText: requirements, specialisations };
+}
+
+// Specialisation names seen in any handbook, including ones already on disk,
+// so a single-year re-scrape still recognises them. Names are matched with
+// hyphens as spaces: "Human-Centred" is "Human Centred" in the program text.
+const knownSpecialisations = new Map<string, string>();
+for (const file of existsSync("data/handbook") ? readdirSync("data/handbook") : []) {
+  const handbook = JSON.parse(readFileSync(`data/handbook/${file}`, "utf8")) as { program: ScrapedProgram };
+  for (const spec of handbook.program.specialisations) {
+    if (!spec.missing) knownSpecialisations.set(spec.code, spec.name.replace(/-/g, " "));
   }
 }
-for (const code of pending) {
-  if (courses.has(code)) continue;
-  const course = await scrapeCourse(code);
-  if (course) courses.set(course.code, course);
-  else console.warn(`  ${code}: no page`);
-  await sleep(DELAY_MS);
-}
 
-const sorted = [...courses.values()].sort((a, b) => a.code.localeCompare(b.code));
-writeFileSync(
-  "data/catalog.json",
-  `${JSON.stringify({ source: BASE, year: YEAR, scrapedAt: new Date().toISOString(), courses: sorted }, null, 2)}\n`,
-);
-console.log(
-  `wrote data/catalog.json: ${sorted.length} courses, ${sorted.filter((c) => c.requisiteText).length} with requisite text`,
-);
+mkdirSync("data/handbook", { recursive: true });
+for (const year of years) {
+  const listed = (await listCourses(year)).filter((c) => c.Career === "Postgraduate" && c.CourseCode.startsWith("COMP"));
+  const courses = new Map<string, ScrapedCourse>();
+  const pending = new Set<string>();
+
+  for (const item of listed) {
+    const result = await scrapeCourse(year, item.CourseCode, item);
+    if (!result) continue;
+    courses.set(item.CourseCode, result.course);
+    for (const code of result.referenced) pending.add(code);
+  }
+
+  const program = await scrapeProgram(year);
+  for (const code of program.requirementText.match(/[A-Z]{4}\d{4}/g) ?? []) pending.add(code);
+  for (const spec of program.specialisations) for (const code of spec.courses) pending.add(code);
+
+  // Postgraduate courses the requisites, the program or a specialisation name
+  // that the COMP list didn't include (MATH6005, STAT6039, ENGN courses in a
+  // specialisation...), one hop out. Undergraduate codes stay bare.
+  for (const code of pending) {
+    if (courses.has(code) || Number(code[4]) < 6) continue;
+    const result = await scrapeCourse(year, code);
+    if (result) courses.set(code, result.course);
+  }
+
+  const sorted = [...courses.values()].sort((a, b) => a.code.localeCompare(b.code));
+  writeFileSync(
+    `data/handbook/${year}.json`,
+    `${JSON.stringify({ source: BASE, year, scrapedAt: new Date().toISOString(), program, courses: sorted }, null, 2)}\n`,
+  );
+  console.log(
+    `${year}: ${listed.length} listed PG COMP, ${sorted.length} courses kept, ${sorted.filter((c) => c.requisiteText).length} with requisite text, ${program.specialisations.length} specialisations`,
+  );
+}

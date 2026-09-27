@@ -13,9 +13,12 @@ const page = async (path: string) => {
 };
 
 describe("catalog", () => {
-  it("lists every postgraduate course in the snapshot", async () => {
+  it("lists every postgraduate course in the snapshot, by handbook year", async () => {
     const { doc } = await page("/");
     expect(doc.querySelectorAll(".course-card").length).toBeGreaterThanOrEqual(60);
+    const older = (await page("/?year=2024")).doc;
+    expect(older.querySelector('.course-card[data-course="COMP8260"]')).toBeTruthy();
+    expect(doc.querySelector('.course-card[data-course="COMP8280"] .history')).toBeTruthy();
   });
 
   it("filters by semester", async () => {
@@ -34,15 +37,22 @@ describe("catalog", () => {
   });
 
   it("marks a hand-checked reading and gives the reason", async () => {
-    const { doc } = await page("/course/COMP8600");
+    const { doc } = await page("/course/COMP8600?year=2026");
     expect(doc.querySelector("[data-source]")?.getAttribute("data-source")).toBe("hand-checked");
     expect(doc.querySelector(".reading")?.textContent).toMatch(/COMP8880/);
+  });
+
+  it("shows how a course's wording changed across the years", async () => {
+    const { doc } = await page("/course/COMP8830?year=2027");
+    const years = [...doc.querySelectorAll(".wordings .wording-years")].map((p) => p.textContent?.trim());
+    expect(years).toEqual(["2024–2025", "2026", "2027"]);
+    expect(doc.querySelector(".req-tree")?.innerHTML).toContain("COMP8280");
   });
 
   it("shows which courses a course unlocks", async () => {
     const { doc } = await page("/course/COMP6442");
     const unlocked = [...doc.querySelectorAll(".unlocks a")].map((a) => a.getAttribute("href"));
-    expect(unlocked).toContain("/course/COMP6120");
+    expect(unlocked.map((href) => href?.split("?")[0])).toContain("/course/COMP6120");
   });
 
   it("answers 404 for a course that doesn't exist", async () => {

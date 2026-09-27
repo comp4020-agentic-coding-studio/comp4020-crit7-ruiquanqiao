@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { type CatalogCourse, getCourse, HANDBOOK_YEAR } from "./catalog";
+import { type CatalogCourse, getCourse, LATEST_YEAR, type Resolved, resolve, type Version } from "./catalog";
 import { db } from "./db";
 import { PROGRAMS, type Req } from "./requisites";
 import { type Plan, type PlanItem, planItems, plans } from "./schema";
@@ -28,17 +28,53 @@ export function termSession(term: string): "S1" | "S2" {
   return term.slice(5) === "S1" ? "S1" : "S2";
 }
 
+export const termYear = (term: string) => Number(term.slice(0, 4));
+
+// The semesters a plan shows: at least four from its start, through its last
+// placement, and one empty semester after, so a part-time or longer plan can
+// always grow.
+export function planTerms(startTerm: string, items: PlanItem[]): string[] {
+  const first = items.reduce((min, i) => (i.term < min ? i.term : min), startTerm);
+  const last = items.reduce((max, i) => (i.term > max ? i.term : max), termsFrom(startTerm, TERMS_SHOWN).at(-1) as string);
+  const terms = [first];
+  while ((terms.at(-1) as string) < last) terms.push(termsFrom(terms.at(-1) as string, 2)[1]);
+  const extra = items.some((i) => i.term === last) ? termsFrom(last, 2)[1] : null;
+  return extra ? [...terms, extra] : terms;
+}
+
 export function isTerm(value: string): boolean {
   return /^20\d\d-S[12]$/.test(value);
+}
+
+// Semester 1 runs late February to June, Semester 2 late July to November.
+// Enrolment for a semester has closed once it starts, so the first term still
+// open for planning is the one after whichever is running.
+export function nextOpenTerm(today = new Date()): string {
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  return month <= 1 ? `${year}-S1` : month <= 6 ? `${year}-S2` : `${year + 1}-S1`;
+}
+
+export function termStatus(term: string, today = new Date()): "past" | "current" | "future" {
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const current = month >= 2 && month <= 6 ? `${year}-S1` : month >= 7 && month <= 11 ? `${year}-S2` : null;
+  if (term === current) return "current";
+  return term < nextOpenTerm(today) ? "past" : "future";
 }
 
 // --- judging one placement ---------------------------------------------------
 
 type Context = {
-  done: Set<string>; // finished in an earlier term
+  done: Map<string, number>; // code → year finished, earlier terms only
   now: Set<string>; // taken in the same term
   program: string;
 };
+
+export function unitsIn(code: string, year: number): number {
+  const course = getCourse(code);
+  return (course && resolve(course, year).version?.units) || 6;
+}
 
 export function meets(req: Req, ctx: Context): boolean {
   switch (req.kind) {
@@ -52,9 +88,9 @@ export function meets(req: Req, ctx: Context): boolean {
       return req.program === ctx.program || req.program === "PG";
     case "units": {
       let total = 0;
-      for (const code of ctx.done) {
+      for (const [code, year] of ctx.done) {
         const course = getCourse(code);
-        if (course && course.subject === req.subject && course.level >= req.level) total += course.units;
+        if (course && course.subject === req.subject && course.level >= req.level) total += unitsIn(code, year);
       }
       return total >= req.units;
     }
@@ -66,7 +102,7 @@ export function describeLeaf(req: Req): string {
     case "course":
       return req.concurrent ? `${req.code} (earlier or same semester)` : req.code;
     case "program":
-      return `enrolment in ${PROGRAMS[req.program] ?? req.program}`;
+      return `enrolment in the ${PROGRAMS[req.program] ?? req.program}`;
     case "units":
       return `${req.units} units of ${req.level > 1000 ? `${req.level}-level ` : ""}${req.subject} courses`;
     default:
@@ -89,6 +125,12 @@ export function missing(req: Req, ctx: Context, nested = false): string {
   return req.kind === "course" ? req.code : describeLeaf(req);
 }
 
+function unmetConcurrent(req: Req, ctx: Context): string[] {
+  if (meets(req, ctx)) return [];
+  if (req.kind === "all" || req.kind === "any") return req.of.flatMap((r) => unmetConcurrent(r, ctx));
+  return req.kind === "course" && req.concurrent ? [req.code] : [];
+}
+
 // "Needs A or B first", plus which of those may share the semester.
 export function needsMessage(req: Req, ctx: Context): string {
   const alongside = [...new Set(unmetConcurrent(req, ctx))];
@@ -96,51 +138,71 @@ export function needsMessage(req: Req, ctx: Context): string {
   return `Needs ${missing(req, ctx)} first${tail}.`;
 }
 
-function unmetConcurrent(req: Req, ctx: Context): string[] {
-  if (meets(req, ctx)) return [];
-  if (req.kind === "all" || req.kind === "any") return req.of.flatMap((r) => unmetConcurrent(r, ctx));
-  return req.kind === "course" && req.concurrent ? [req.code] : [];
-}
-
 export type Warning = {
-  kind: "requisites" | "offering" | "incompatible" | "program";
+  kind: "handbook" | "requisites" | "offering" | "incompatible" | "program" | "repeat";
   message: string;
 };
 
-export type JudgedItem = PlanItem & { course: CatalogCourse; warnings: Warning[] };
+export type JudgedItem = PlanItem & {
+  course: CatalogCourse;
+  resolved: Resolved;
+  units: number;
+  warnings: Warning[];
+};
 
-function contextAt(items: PlanItem[], term: string, program: string): Context {
+export function contextAt(items: PlanItem[], term: string, program: string): Context {
   return {
-    done: new Set(items.filter((i) => i.term < term).map((i) => i.courseCode)),
+    done: new Map(items.filter((i) => i.term < term).map((i) => [i.courseCode, termYear(i.term)])),
     now: new Set(items.filter((i) => i.term === term).map((i) => i.courseCode)),
     program,
   };
 }
 
-// Every check warns and none blocks: the rules come from a snapshot of prose,
-// and a student with a permission code or a credit knows things this doesn't.
+// Every check reads the handbook of the year the course is taken, and every
+// check warns; none blocks. The rules come from snapshots of prose, and a
+// student with a permission code or a credit knows things this doesn't.
 export function judge(course: CatalogCourse, term: string, items: PlanItem[], program: string): Warning[] {
+  const { version, year } = resolve(course, termYear(term));
+  if (!version) return [{ kind: "handbook", message: `Not in the ${year} handbook.` }];
+  return [...judgeVersion(version, year, course.code, term, items, program), ...judgeRepeats(version, course.code, term, items)];
+}
+
+// A course is normally counted once, so a second placement is flagged (it may
+// be a retake). COMP8715 is the exception the handbook spells out: it must be
+// taken twice, in consecutive semesters.
+function judgeRepeats(version: Version, code: string, term: string, items: PlanItem[]): Warning[] {
+  const terms = items.filter((i) => i.courseCode === code).map((i) => i.term).sort();
+  if (version.takenTwice) {
+    const next = termsFrom(term, 2)[1];
+    const previous = terms.filter((t) => t < term).at(-1);
+    const paired = terms.includes(next) || (previous !== undefined && termsFrom(previous, 2)[1] === term);
+    if (terms.length === 1) return [{ kind: "repeat", message: `Taken twice, in consecutive semesters: add it to ${termLabel(next)} too.` }];
+    if (!paired) return [{ kind: "repeat", message: "Its two semesters must be consecutive." }];
+    if (terms.length > 2) return [{ kind: "repeat", message: `Planned ${terms.length} times; it is taken twice.` }];
+    return [];
+  }
+  const others = terms.filter((t) => t !== term);
+  return others.length
+    ? [{ kind: "repeat", message: `Also planned for ${others.map(termLabel).join(", ")}; it counts only once.` }]
+    : [];
+}
+
+function judgeVersion(version: Version, year: number, code: string, term: string, items: PlanItem[], program: string) {
   const warnings: Warning[] = [];
   const session = termSession(term);
-  if (course.sessions.length === 0) {
-    warnings.push({ kind: "offering", message: `Not offered at all in ${HANDBOOK_YEAR}.` });
-  } else if (!course.sessions.includes(session)) {
-    warnings.push({
-      kind: "offering",
-      message: `Only offered in ${course.sessions.join(" and ")}, not ${session}.`,
-    });
+  if (version.sessions.length === 0) {
+    warnings.push({ kind: "offering", message: `Not offered in ${year}.` });
+  } else if (!version.sessions.includes(session)) {
+    warnings.push({ kind: "offering", message: `Offered only in ${version.sessions.join(" and ")} in ${year}, not ${session}.` });
   }
   const ctx = contextAt(items, term, program);
-  if (course.tree && !meets(course.tree, ctx)) {
-    warnings.push({ kind: "requisites", message: needsMessage(course.tree, ctx) });
+  if (version.tree && !meets(version.tree, ctx)) {
+    warnings.push({ kind: "requisites", message: needsMessage(version.tree, ctx) });
   }
-  if (course.excludedPrograms.split(",").includes(program)) {
-    warnings.push({
-      kind: "program",
-      message: `Closed to students in the ${PROGRAMS[program] ?? program}.`,
-    });
+  if (version.excludedPrograms.split(",").includes(program)) {
+    warnings.push({ kind: "program", message: `Closed to students in the ${PROGRAMS[program] ?? program}.` });
   }
-  const clashes = items.filter((i) => i.courseCode !== course.code && course.incompatible.includes(i.courseCode));
+  const clashes = items.filter((i) => i.courseCode !== code && version.incompatible.includes(i.courseCode));
   if (clashes.length > 0) {
     warnings.push({
       kind: "incompatible",
@@ -150,13 +212,13 @@ export function judge(course: CatalogCourse, term: string, items: PlanItem[], pr
   return warnings;
 }
 
-// The first term, from the plan's start, where a course is offered and its
-// requisites are met by what the plan has already scheduled.
+// The first term still open for enrolment, from the plan's start, where a
+// course runs and its requisites are met by what the plan already schedules.
 export function earliestTerm(course: CatalogCourse, plan: Plan, items: PlanItem[]): string | null {
   const others = items.filter((i) => i.courseCode !== course.code);
-  for (const term of termsFrom(plan.startTerm, 6)) {
-    const ok = judge(course, term, others, plan.program).every((w) => w.kind === "incompatible");
-    if (ok) return term;
+  const open = nextOpenTerm();
+  for (const term of termsFrom(plan.startTerm > open ? plan.startTerm : open, 6)) {
+    if (judge(course, term, others, plan.program).every((w) => w.kind === "incompatible")) return term;
   }
   return null;
 }
@@ -180,43 +242,79 @@ export function judgedItems(plan: Plan): JudgedItem[] {
   const items = getItems(plan.id);
   return items.flatMap((item) => {
     const course = getCourse(item.courseCode);
-    return course ? [{ ...item, course, warnings: judge(course, item.term, items, plan.program) }] : [];
+    if (!course) return [];
+    const resolved = resolve(course, termYear(item.term));
+    return [
+      {
+        ...item,
+        course,
+        resolved,
+        units: resolved.version?.units ?? unitsIn(item.courseCode, LATEST_YEAR),
+        warnings: judge(course, item.term, items, plan.program),
+      },
+    ];
   });
 }
 
-// Adding a course that is already in the plan moves it to the new term.
+// A course appears at most once per semester; adding it again elsewhere is a
+// second placement, which the planner then judges.
 export function placeCourse(planId: string, courseCode: string, term: string): void {
-  db.insert(planItems)
-    .values({ planId, courseCode, term })
-    .onConflictDoUpdate({ target: [planItems.planId, planItems.courseCode], set: { term } })
+  db.insert(planItems).values({ planId, courseCode, term }).onConflictDoNothing().run();
+}
+
+export function moveItem(planId: string, itemId: number, term: string): void {
+  const item = db
+    .select()
+    .from(planItems)
+    .where(and(eq(planItems.planId, planId), eq(planItems.id, itemId)))
+    .get();
+  if (!item || item.term === term) return;
+  db.transaction((tx) => {
+    // moving onto the same course in the target semester merges the two
+    const clash = tx
+      .select()
+      .from(planItems)
+      .where(and(eq(planItems.planId, planId), eq(planItems.courseCode, item.courseCode), eq(planItems.term, term)))
+      .get();
+    if (clash) tx.delete(planItems).where(eq(planItems.id, item.id)).run();
+    else tx.update(planItems).set({ term }).where(eq(planItems.id, item.id)).run();
+  });
+}
+
+export function removeItem(planId: string, itemId: number): void {
+  db.delete(planItems)
+    .where(and(eq(planItems.planId, planId), eq(planItems.id, itemId)))
     .run();
 }
 
-export function removeCourse(planId: string, courseCode: string): void {
-  db.delete(planItems)
-    .where(and(eq(planItems.planId, planId), eq(planItems.courseCode, courseCode)))
-    .run();
+export function setSpecialisation(planId: string, specialisation: string | null): void {
+  db.update(plans).set({ specialisation }).where(eq(plans.id, planId)).run();
 }
 
 export function copyPlan(source: Plan): Plan {
   const copy = createPlan(source.startTerm, source.program);
+  setSpecialisation(copy.id, source.specialisation);
   for (const item of getItems(source.id)) placeCourse(copy.id, item.courseCode, item.term);
-  return copy;
+  return { ...copy, specialisation: source.specialisation };
 }
 
-// A read-only example anyone can open or copy: a full MCOMP path from Semester
-// 1 2026 that clears every check. Rewritten at boot so it can't drift.
+// A read-only example anyone can open or copy: a full Master of Computing
+// from Semester 1 2026 that clears every check, specialisation included.
+// Rewritten at boot so it can't drift.
 export const EXAMPLE_ID = "example";
+const EXAMPLE_SPECIALISATION = "MCHL-SPEC";
 const EXAMPLE: Record<string, string[]> = {
   "2026-S1": ["COMP7710", "MATH6005", "COMP8280"],
   "2026-S2": ["COMP6442", "COMP6120", "COMP6670", "COMP6390"],
-  "2027-S1": ["COMP8600", "COMP6242", "COMP6528", "COMP8715"],
-  "2027-S2": ["COMP8020", "COMP6466", "COMP6261", "COMP6464"],
+  "2027-S1": ["COMP8600", "COMP6528", "COMP8715", "COMP8650"],
+  "2027-S2": ["COMP8020", "COMP6261", "COMP8715", "COMP6466"],
 };
 
 db.transaction((tx) => {
   tx.delete(plans).where(eq(plans.id, EXAMPLE_ID)).run();
-  tx.insert(plans).values({ id: EXAMPLE_ID, program: "MCOMP", startTerm: "2026-S1" }).run();
+  tx.insert(plans)
+    .values({ id: EXAMPLE_ID, program: "MCOMP", startTerm: "2026-S1", specialisation: EXAMPLE_SPECIALISATION })
+    .run();
   for (const [term, codes] of Object.entries(EXAMPLE)) {
     for (const courseCode of codes) tx.insert(planItems).values({ planId: EXAMPLE_ID, courseCode, term }).run();
   }

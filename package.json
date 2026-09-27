@@ -12,7 +12,8 @@
     "check:evidence": "node scripts/check-evidence.ts",
     "test": "astro build && vitest run",
     "db:generate": "drizzle-kit generate",
-    "scrape": "node scripts/scrape.ts"
+    "scrape": "node scripts/scrape.ts",
+    "readings": "node scripts/readings.ts"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "7.3.1",

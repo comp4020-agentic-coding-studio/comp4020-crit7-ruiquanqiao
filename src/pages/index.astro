@@ -1,24 +1,29 @@
 ---
+import History from "../components/History.astro";
 import StartPlan from "../components/StartPlan.astro";
 import Base from "../layouts/Base.astro";
-import { listedCourses, SCRAPED_AT } from "../lib/catalog";
+import { coursesIn, HANDBOOK_YEARS, LATEST_YEAR, SCRAPED_AT } from "../lib/catalog";
 import { earliestTerm, getItems, getPlan, judgedItems, termLabel } from "../lib/planner";
 
-const session = Astro.url.searchParams.get("session") ?? "";
-const level = Astro.url.searchParams.get("level") ?? "";
-const q = (Astro.url.searchParams.get("q") ?? "").trim().toLowerCase();
+const params = Astro.url.searchParams;
+const requestedYear = Number(params.get("year"));
+const year = HANDBOOK_YEARS.includes(requestedYear) ? requestedYear : LATEST_YEAR;
+const session = params.get("session") ?? "";
+const level = params.get("level") ?? "";
+const q = (params.get("q") ?? "").trim().toLowerCase();
 
 const planId = Astro.cookies.get("plan")?.value;
 const plan = planId ? getPlan(planId) : undefined;
 const items = plan ? getItems(plan.id) : [];
 const judged = new Map((plan ? judgedItems(plan) : []).map((item) => [item.courseCode, item]));
 
-const courses = listedCourses().filter(
-  (c) =>
-    (!session || (session === "none" ? c.sessions.length === 0 : c.sessions.includes(session as never))) &&
-    (!level || String(c.level) === level) &&
-    (!q || `${c.code} ${c.name} ${c.description}`.toLowerCase().includes(q)),
-);
+const courses = coursesIn(year).filter((c) => {
+  const v = c.versions.get(year);
+  if (!v) return false;
+  if (session && (session === "none" ? v.sessions.length > 0 : !v.sessions.includes(session))) return false;
+  if (level && String(c.level) !== level) return false;
+  return !q || `${c.code} ${v.name} ${v.description}`.toLowerCase().includes(q);
+});
 
 const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 ---
@@ -26,9 +31,10 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
 <Base title="Postgraduate computing courses" wide>
   <h1>Postgraduate computing courses</h1>
   <p class="lede">
-    Every postgraduate COMP course in the ANU handbook, with its prerequisites turned from a paragraph into rules
-    this site can check. Put courses into a plan and it tells you, semester by semester, what you can't take yet and
-    why.
+    Every postgraduate COMP course in the ANU handbook, {HANDBOOK_YEARS[0]} to {LATEST_YEAR}, and the courses from other
+    subjects that their rules and specialisations name, with prerequisites turned from a paragraph into rules this site
+    can check. Put courses into a plan and it tells you, semester by
+    semester, what you can't take yet and why, by the rules of the year you'd take it.
   </p>
 
   {
@@ -51,12 +57,16 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
   <form method="get" action="/" class="filters" role="search">
     <label for="q">Search</label>
     <input id="q" name="q" type="search" value={q} placeholder="code, name or topic" />
+    <label for="year">Handbook</label>
+    <select id="year" name="year">
+      {HANDBOOK_YEARS.map((y) => <option value={y} selected={y === year}>{y}</option>)}
+    </select>
     <label for="session">Offered in</label>
     <select id="session" name="session">
       <option value="">Any semester</option>
       <option value="S1" selected={session === "S1"}>Semester 1</option>
       <option value="S2" selected={session === "S2"}>Semester 2</option>
-      <option value="none" selected={session === "none"}>Not offered this year</option>
+      <option value="none" selected={session === "none"}>Not offered that year</option>
     </select>
     <label for="level">Level</label>
     <select id="level" name="level">
@@ -66,38 +76,40 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
     <button>Filter</button>
   </form>
 
-  <p class="count">{courses.length} courses · handbook snapshot taken {scraped}</p>
+  <p class="count">
+    {courses.length} courses in the {year} handbook · snapshots taken {scraped}
+  </p>
 
   <ul class="course-list">
     {
       courses.map((course) => {
+        const v = course.versions.get(year);
         const inPlan = judged.get(course.code);
         const earliest = plan && !inPlan ? earliestTerm(course, plan, items) : null;
         return (
           <li class="course-card" data-course={course.code}>
             <h2>
-              <a href={`/course/${course.code}`}>
-                <span class="code">{course.code}</span> {course.name}
+              <a href={`/course/${course.code}?year=${year}`}>
+                <span class="code">{course.code}</span> {v?.name}
               </a>
             </h2>
             <p class="chips">
-              {course.sessions.length ? (
-                course.sessions.map((s) => <span class={`chip chip-${s}`}>{s}</span>)
+              {v?.sessions.length ? (
+                v.sessions.map((s) => <span class={`chip chip-${s}`}>{s}</span>)
               ) : (
-                <span class="chip chip-off">Not offered in 2026</span>
+                <span class="chip chip-off">Not offered in {year}</span>
               )}
-              <span class="chip chip-units">{course.units} units</span>
-              {course.tree ? (
-                <span class="chip">Has prerequisites</span>
-              ) : (
-                <span class="chip chip-open">No prerequisites</span>
-              )}
+              <span class="chip chip-units">{v?.units} units</span>
+              {v?.tree ? <span class="chip">Has prerequisites</span> : <span class="chip chip-open">No prerequisites</span>}
             </p>
+            <History course={course} />
             {plan &&
               (inPlan ? (
                 <p class={inPlan.warnings.length ? "fit fit-warn" : "fit fit-ok"}>
                   In your plan, {termLabel(inPlan.term)}
-                  {inPlan.warnings.length ? ` · ${inPlan.warnings.length} problem${inPlan.warnings.length > 1 ? "s" : ""}` : ""}
+                  {inPlan.warnings.length
+                    ? ` · ${inPlan.warnings.length} problem${inPlan.warnings.length > 1 ? "s" : ""}`
+                    : ""}
                 </p>
               ) : earliest ? (
                 <p class="fit">Earliest you could take it: {termLabel(earliest)}</p>

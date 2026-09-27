@@ -704,3 +704,142 @@ blockquote {
   flex: 1 1 0;
   min-width: 0;
 }
+
+/* --- years ----------------------------------------------------------------- */
+
+.history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+}
+
+.history li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 4.2rem;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.history-year {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.history li[data-state="offered"] {
+  border-color: var(--s2);
+  color: var(--s2);
+  font-weight: 600;
+}
+
+.history li[data-state="none"],
+.history li[data-state="absent"] {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+}
+
+.year-tabs a,
+.year-tabs .year-absent {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.year-tabs a[aria-current="page"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.year-tabs .year-absent {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.wordings {
+  padding-left: 0;
+  list-style: none;
+}
+
+.wordings li {
+  margin-bottom: 0.75rem;
+}
+
+.wordings li[data-current="yes"] blockquote {
+  border-left-color: var(--accent);
+  color: var(--ink);
+}
+
+.wording-years {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+}
+
+.term-status {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.term[data-status="past"] {
+  background: var(--paper);
+}
+
+.progress-basis {
+  margin-top: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.spec-form {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.spec-form label {
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.spec-form select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+}
+
+.progress-rows li[data-depth="1"] {
+  padding-left: 1rem;
+  font-size: 0.85rem;
+}
+
+.progress-rows li[data-depth="1"] .req-mark {
+  font-size: 0.8rem;
+}
+
+.progress .reading {
+  font-size: 0.82rem;
+}

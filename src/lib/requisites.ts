@@ -30,6 +30,19 @@ export const PROGRAMS: Record<string, string> = {
   GDCP: "Graduate Diploma of Computing",
   MENG: "Master of Engineering",
   MADAN: "Master of Applied Data Analytics",
+  GDADA: "Graduate Diploma of Applied Data Analytics",
+  GCADA: "Graduate Certificate of Applied Data Analytics",
+  GCDE: "Graduate Certificate of Data Engineering",
+  MCSSRM: "Master of Cyber Security, Strategy and Risk Management",
+  MPM: "Master of Project Management",
+  MBIS: "Master of Business Information Systems",
+  GCNTR: "Graduate Certificate in Nuclear Technology and Regulation",
+  MLLM: "Master of Laws",
+  CLAW: "Graduate Certificate of Law",
+  GCNTL: "Graduate Certificate of New Technologies Law",
+  MJD: "Juris Doctor",
+  MFIML: "Master of Financial Management and Law",
+  MMGNT: "Master of Management",
   PG: "any ANU postgraduate program",
   STATS: "a listed statistics, actuarial or bioinformatics master's",
 };
@@ -42,11 +55,17 @@ const PROGRAM_PATTERNS: [RegExp, string][] = [
   [/^Masters? of Computing/i, "MCOMP"],
   [/^Graduate Diploma of Computing/i, "GDCP"],
   [/^Masters? of Engineering/i, "MENG"],
+  [/^Masters? of Applied Data Analytics/i, "MADAN"],
+  [/^Graduate Diploma of Applied Data Analytics/i, "GDADA"],
+  [/^Graduate Certificate of Applied Data Analytics/i, "GCADA"],
+  [/^Graduate Certificate of Data Engineering/i, "GCDE"],
+  [/^Masters? of Cyber Security,? Strategy (?:&|and) Risk Management/i, "MCSSRM"],
+  [/^Masters? of Management\b/i, "MMGNT"],
   [/^postgraduate program at ANU/i, "PG"],
   [/^(VCOMP|MCOMP|MMLCV|MADAN)\b/, "$1"],
 ];
 
-const CAVEAT = /permission code|GPA|equivalent|Additional Prerequisite|eligibility criteria|competitive entry|project group/i;
+const CAVEAT = /permission|case-by-case|GPA|equivalent|Additional Prerequisite|eligibility criteria|competitive entry|project group/i;
 const CODE = /[A-Z]{4}\d{4}/g;
 
 type Token =
@@ -123,7 +142,9 @@ function tokenize(sentence: string): Token[] {
       tokens.push({ t: "op", op: "or" });
       continue;
     }
-    if ((match = eat(/^;/))) tokens.push({ t: "semi" });
+    // "COMP2620 / COMP6262": a slash between two whole codes offers either
+    if ((match = eat(/^\/(?=\s*[A-Z]{4}\d{4})/))) tokens.push({ t: "op", op: "or" });
+    else if ((match = eat(/^;/))) tokens.push({ t: "semi" });
     else if ((match = eat(/^\(/))) tokens.push({ t: "open" });
     else if ((match = eat(/^\)/))) tokens.push({ t: "close" });
     else if ((match = eat(/^,/))) tokens.push({ t: "comma" });
@@ -181,8 +202,12 @@ function parseLevel(tokens: Token[], pos: { i: number }, depth: number): Req {
     }
     if (token.t === "op") {
       if (expectOperand) {
-        if (operands.length === 0) continue;
-        throw new Ambiguous(`two operators in a row ("${token.op}")`);
+        // an operator with nothing before it means words were dropped: INFS8004
+        // once read as "INFS7004" alone after "MMGNT - Master of Management
+        // or" lost its program
+        throw new Ambiguous(
+          operands.length === 0 ? `an "${token.op}" with no condition before it` : `two operators in a row ("${token.op}")`,
+        );
       }
       ops.push(token.op);
       expectOperand = true;
@@ -254,7 +279,10 @@ export function parseRequisite(raw: string): ParsedRequisite {
   const caveat = CAVEAT.test(raw);
   const requirements = text
     .split(/\.\s+(?=[A-Z])|\.\s*$/)
-    .filter((sentence) => /\bmust\b/i.test(sentence));
+    // "must contact Student Services to request a permission code" is a
+    // procedure, not a condition: COMP6340 once parsed as "enrolled in the
+    // Master of Cyber Security" from exactly that sentence
+    .filter((sentence) => /\bmust\b(?!\s+(?:contact|request|apply|submit)\b)/i.test(sentence));
 
   const base = {
     incompatible: [...new Set(incompatible)],

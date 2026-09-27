@@ -1,8 +1,21 @@
 ---
+import History from "../../components/History.astro";
 import RequisiteTree from "../../components/RequisiteTree.astro";
 import Base from "../../layouts/Base.astro";
-import { getCourse, HANDBOOK_YEAR, unlocks } from "../../lib/catalog";
-import { earliestTerm, getItems, getPlan, judge, meets, needsMessage, termLabel, termsFrom } from "../../lib/planner";
+import { getCourse, HANDBOOK_YEARS, LATEST_YEAR, latestVersion, resolve, unlocks } from "../../lib/catalog";
+import {
+  contextAt,
+  earliestTerm,
+  getItems,
+  getPlan,
+  judge,
+  meets,
+  needsMessage,
+  planTerms,
+  termLabel,
+  termsFrom,
+  termYear,
+} from "../../lib/planner";
 import { PROGRAMS } from "../../lib/requisites";
 
 const code = (Astro.params.code ?? "").toUpperCase();
@@ -12,79 +25,106 @@ if (!course) {
 }
 
 const planId = Astro.cookies.get("plan")?.value;
-const plan = planId && planId !== "example" ? getPlan(planId) : undefined;
+const plan = planId ? getPlan(planId) : undefined;
 const items = plan ? getItems(plan.id) : [];
 const placed = items.find((i) => i.courseCode === course.code);
 const earliest = plan && !placed ? earliestTerm(course, plan, items) : null;
 const judgeTerm = placed?.term ?? earliest ?? (plan ? termsFrom(plan.startTerm).at(-1) : undefined);
-const ctx =
-  plan && judgeTerm
-    ? {
-        done: new Set(items.filter((i) => i.term < judgeTerm).map((i) => i.courseCode)),
-        now: new Set(items.filter((i) => i.term === judgeTerm).map((i) => i.courseCode)),
-        program: plan.program,
-      }
-    : undefined;
+
+// Which handbook year to show: the one asked for, else the one the plan would
+// judge this course by, else the latest this course appears in.
+const asked = Number(Astro.url.searchParams.get("year"));
+const planYear = judgeTerm ? resolve(course, termYear(judgeTerm)).year : undefined;
+const fallback = latestVersion(course)?.year ?? LATEST_YEAR;
+const year = course.versions.has(asked) ? asked : planYear && course.versions.has(planYear) ? planYear : fallback;
+const v = course.versions.get(year);
+
+const ctx = plan && judgeTerm ? contextAt(items, judgeTerm, plan.program) : undefined;
+const judgedHere = plan && judgeTerm && planYear === year;
 const warnings = placed && plan ? judge(course, placed.term, items, plan.program) : [];
-const unlocked = unlocks(course.code);
-const excluded = course.excludedPrograms.split(",").filter(Boolean);
-const source = `https://programsandcourses.anu.edu.au/${HANDBOOK_YEAR}/course/${course.code}`;
+const unlocked = unlocks(course.code, year);
+const excluded = v?.excludedPrograms.split(",").filter(Boolean) ?? [];
+const source = `https://programsandcourses.anu.edu.au/${year}/course/${course.code}`;
 const sourceLabel = {
-  parsed: "Read automatically from the handbook text",
-  "hand-checked": "The handbook text is ambiguous; this is a person's reading of it",
+  parsed: "Read automatically from the handbook's wording",
+  "hand-checked": "The handbook's wording is ambiguous; this is a person's reading of it",
   none: "No prerequisites",
-}[course.requisiteSource];
+};
+
+// The requisite wording, grouped into runs of years that say the same thing.
+const wordings: { years: number[]; text: string }[] = [];
+for (const y of HANDBOOK_YEARS) {
+  const text = course.versions.get(y)?.requisiteText;
+  if (text === undefined) continue;
+  const last = wordings.at(-1);
+  if (last && last.text === text) last.years.push(y);
+  else wordings.push({ years: [y], text });
+}
+const span = (years: number[]) => (years.length > 1 ? `${years[0]}–${years.at(-1)}` : `${years[0]}`);
 ---
 
-<Base title={course.stub ? course.code : `${course.code} ${course.name}`}>
-  <p class="breadcrumb"><a href="/">All courses</a></p>
+<Base title={v ? `${course.code} ${v.name}` : course.code}>
+  <p class="breadcrumb"><a href={`/?year=${year}`}>All courses</a></p>
   {
-    course.stub ? (
+    !v ? (
       <>
         <h1>
           <span class="code">{course.code}</span>
         </h1>
         <p class="lede">
-          This course is named in another course's rules but isn't one of the {HANDBOOK_YEAR} postgraduate courses
-          this site holds: it is undergraduate, from another subject, or no longer in the handbook. Only its code
-          is known here.
+          This course is named in another course's rules, but it isn't in any of the {HANDBOOK_YEARS[0]}–{LATEST_YEAR}{" "}
+          handbooks this site holds as a postgraduate course: it is undergraduate, from another subject, or retired.
+          Only its code is known here.
         </p>
         <p>
-          <a href={source}>Look it up on Programs and Courses</a>
+          <a href={`https://programsandcourses.anu.edu.au/course/${course.code}`}>Look it up on Programs and Courses</a>
         </p>
       </>
     ) : (
       <>
         <h1>
-          <span class="code">{course.code}</span> {course.name}
+          <span class="code">{course.code}</span> {v.name}
         </h1>
-        <p class="chips">
-          {course.sessions.length ? (
-            course.sessions.map((s) => <span class={`chip chip-${s}`}>{s}</span>)
-          ) : (
-            <span class="chip chip-off">Not offered in {HANDBOOK_YEAR}</span>
+        <nav class="year-tabs" aria-label="Handbook year">
+          {HANDBOOK_YEARS.map((y) =>
+            course.versions.has(y) ? (
+              <a href={`/course/${course.code}?year=${y}`} aria-current={y === year ? "page" : undefined}>
+                {y}
+              </a>
+            ) : (
+              <span class="year-absent">{y}</span>
+            ),
           )}
-          <span class="chip chip-units">{course.units} units</span>
+        </nav>
+        <p class="chips">
+          {v.sessions.length ? (
+            v.sessions.map((s) => <span class={`chip chip-${s}`}>{s}</span>)
+          ) : (
+            <span class="chip chip-off">Not offered in {year}</span>
+          )}
+          <span class="chip chip-units">{v.units} units</span>
           <span class="chip">{course.level}-level</span>
         </p>
-        <p>{course.description}</p>
+        <p>{v.description}</p>
+        <History course={course} />
 
         {plan && (
           <section class="plan-box" aria-labelledby="plan-heading">
             <h2 id="plan-heading">In your plan</h2>
             {placed ? (
               <p>
-                Planned for <strong>{termLabel(placed.term)}</strong>.
-                {warnings.length === 0 && " Nothing stands in the way."}
+                Planned for <strong>{termLabel(placed.term)}</strong>
+                {resolve(course, termYear(placed.term)).assumed && `, judged by the ${planYear} handbook, the latest published`}
+                .{warnings.length === 0 && " Nothing stands in the way."}
               </p>
             ) : earliest ? (
               <p>
-                The earliest semester your plan allows is <strong>{termLabel(earliest)}</strong>.
+                The earliest semester still open that your plan allows is <strong>{termLabel(earliest)}</strong>.
               </p>
             ) : (
               <p>
                 Your plan doesn't lead here yet.
-                {course.tree && ctx && !meets(course.tree, ctx) && ` ${needsMessage(course.tree, ctx)}`}
+                {v.tree && ctx && !meets(v.tree, ctx) && ` ${needsMessage(v.tree, ctx)}`}
               </p>
             )}
             {warnings.length > 0 && (
@@ -95,11 +135,11 @@ const sourceLabel = {
               </ul>
             )}
             <form method="post" action={`/api/plans/${plan.id}/items`}>
-              <input type="hidden" name="course" value={course.code} />
+              {placed ? <input type="hidden" name="item" value={placed.id} /> : <input type="hidden" name="course" value={course.code} />}
               <input type="hidden" name="back" value={`/course/${course.code}`} />
               <label for="term">{placed ? "Move to" : "Add to"}</label>
               <select id="term" name="term">
-                {termsFrom(plan.startTerm).map((term) => (
+                {planTerms(plan.startTerm, items).map((term) => (
                   <option value={term} selected={term === (placed?.term ?? earliest)}>
                     {termLabel(term)}
                   </option>
@@ -111,32 +151,32 @@ const sourceLabel = {
         )}
 
         <section aria-labelledby="req-heading">
-          <h2 id="req-heading">Prerequisites</h2>
-          <p class="source-note" data-source={course.requisiteSource}>
-            {sourceLabel}
-            {ctx && course.tree && ` · ticks show what your plan has by ${judgeTerm ? termLabel(judgeTerm) : "then"}`}
+          <h2 id="req-heading">Prerequisites in {year}</h2>
+          <p class="source-note" data-source={v.requisiteSource}>
+            {sourceLabel[v.requisiteSource]}
+            {judgedHere && v.tree && judgeTerm && ` · ticks show what your plan has by ${termLabel(judgeTerm)}`}
           </p>
-          {course.tree ? (
+          {v.tree ? (
             <div class="req-tree">
-              <RequisiteTree req={course.tree} ctx={ctx} />
+              <RequisiteTree req={v.tree} ctx={judgedHere ? ctx : undefined} />
             </div>
           ) : (
             <p>None: anyone in a postgraduate program can enrol{excluded.length ? ", with the exception below" : ""}.</p>
           )}
-          {course.requisiteReading && <p class="reading">Why it's read this way: {course.requisiteReading}</p>}
-          {course.caveat && (
+          {v.requisiteReading && <p class="reading">Why it's read this way: {v.requisiteReading}</p>}
+          {v.caveat && (
             <p class="caveat">
-              The handbook also asks for something this site can't check (a permission code, a GPA, group
-              membership or "equivalent" study). Read the original below.
+              The handbook also asks for something this site can't check (a permission code, a GPA, group membership
+              or "equivalent" study). Read the original below.
             </p>
           )}
           {excluded.length > 0 && (
             <p class="caveat">Closed to students in the {excluded.map((p) => PROGRAMS[p] ?? p).join(", ")}.</p>
           )}
-          {course.incompatible.length > 0 && (
+          {v.incompatible.length > 0 && (
             <p>
               Incompatible with{" "}
-              {course.incompatible.map((other, i) => (
+              {v.incompatible.map((other, i) => (
                 <>
                   {i > 0 && ", "}
                   <a href={`/course/${other}`} class="code">
@@ -147,36 +187,54 @@ const sourceLabel = {
               : you can't count both.
             </p>
           )}
-          {course.requisiteText && (
-            <details>
-              <summary>The handbook's original wording</summary>
-              <blockquote>{course.requisiteText}</blockquote>
+          {wordings.length > 1 ? (
+            <details open>
+              <summary>The handbook's wording, and when it changed</summary>
+              <ol class="wordings">
+                {wordings.map((w) => (
+                  <li data-current={w.years.includes(year) ? "yes" : undefined}>
+                    <p class="wording-years">
+                      <a href={`/course/${course.code}?year=${w.years[0]}`}>{span(w.years)}</a>
+                    </p>
+                    <blockquote>{w.text || "No requisite text."}</blockquote>
+                  </li>
+                ))}
+              </ol>
             </details>
+          ) : (
+            v.requisiteText && (
+              <details>
+                <summary>The handbook's original wording ({span(wordings[0]?.years ?? [year])})</summary>
+                <blockquote>{v.requisiteText}</blockquote>
+              </details>
+            )
           )}
         </section>
 
         <section aria-labelledby="unlocks-heading">
-          <h2 id="unlocks-heading">What it leads to</h2>
+          <h2 id="unlocks-heading">What it leads to in {year}</h2>
           {unlocked.length ? (
             <>
-              <p>These courses name {course.code} in their prerequisites:</p>
+              <p>These courses name {course.code} in their {year} prerequisites:</p>
               <ul class="unlocks">
                 {unlocked.map((c) => (
                   <li>
-                    <a href={`/course/${c.code}`}>
-                      <span class="code">{c.code}</span> {c.name}
+                    <a href={`/course/${c.code}?year=${year}`}>
+                      <span class="code">{c.code}</span> {c.versions.get(year)?.name ?? c.name}
                     </a>
                   </li>
                 ))}
               </ul>
             </>
           ) : (
-            <p>No course names {course.code} in its prerequisites.</p>
+            <p>No course names {course.code} in its {year} prerequisites.</p>
           )}
         </section>
 
         <p class="source-link">
-          <a href={source}>{course.code} on Programs and Courses</a>
+          <a href={source}>
+            {course.code} in the {year} handbook on Programs and Courses
+          </a>
         </p>
       </>
     )

@@ -1,0 +1,1364 @@
+{
+  "ARTIF-SPEC": [
+    {
+      "text": "Requirements This Specialization requires the completion of 24 units from the following list: COMP6262 Logic COMP6320 Artificial Intelligence COMP8620 Advanced Topics in Artificial Intelligence COMP8691 Optimisation COMP8670 Advanced Logic and Computation",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the list",
+          "units": 24,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP8620",
+            "COMP8691",
+            "COMP8670"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This Specialization requires the completion of 24 units, which must consist of a minimum of 12 units of 8000 level courses. The 24 units must consist of: COMP6262 Logic COMP6320 Artificial Intelligence COMP8620 Advanced Topics in Artificial Intelligence COMP8691 Optimisation",
+      "reading": "The list holds exactly four 6-unit courses, so the 24 units are all four.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the list",
+          "units": 24,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP8620",
+            "COMP8691"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP8620",
+            "COMP8691"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This Specialisation requires the completion of 24 units, which must include a minimum of 12 units of 8000-level courses. A maximum of 12 units from the following list: COMP6262 Logic COMP6320 Artificial Intelligence COMP6242 Deep Learning COMP6670 Introduction to Machine Learning COMP6528 Computer Vision A minimum of 12 units from the following list: COMP8490 Document Analysis COMP8539 Advanced Topics in Computer Vision COMP8600 Statistical Machine Learning COMP8620 Advanced Topics in Artificial Intelligence COMP8650 Advanced Topics in Machine Learning COMP8691 Optimisation",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP6242",
+            "COMP6670",
+            "COMP6528",
+            "COMP8490",
+            "COMP8539",
+            "COMP8600",
+            "COMP8620",
+            "COMP8650",
+            "COMP8691"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP6242",
+            "COMP6670",
+            "COMP6528",
+            "COMP8490",
+            "COMP8539",
+            "COMP8600",
+            "COMP8620",
+            "COMP8650",
+            "COMP8691"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8490",
+            "COMP8539",
+            "COMP8600",
+            "COMP8620",
+            "COMP8650",
+            "COMP8691"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the 6000-level list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6262",
+            "COMP6320",
+            "COMP6242",
+            "COMP6670",
+            "COMP6528"
+          ]
+        }
+      ]
+    }
+  ],
+  "CMSY-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of: A minimum of 12 units from completion of courses from the following list: COMP8300 Parallel Systems COMP8045 Advanced Topics in Computer Systems COMP8712 Compiler Construction A maximum of 12 units from completion of courses from the following list: COMP6310 Systems Networks and Concurrency COMP6330 Operating Systems COMP6331 Computer Networks COMP6361 Principles of Programming Languages COMP6464 High Performance Scientific Computing ENGN6213 Digital Systems and Microprocessors",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP8300",
+            "COMP8045",
+            "COMP8712",
+            "COMP6310",
+            "COMP6330",
+            "COMP6331",
+            "COMP6361",
+            "COMP6464",
+            "ENGN6213"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8300",
+            "COMP8045",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the second list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6310",
+            "COMP6330",
+            "COMP6331",
+            "COMP6361",
+            "COMP6464",
+            "ENGN6213"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of a minimum of 12 units of 8000-level courses. The 24 units must consist of: A minimum of 12 units from completion of courses from the following list: COMP8300 Parallel Systems COMP8045 Advanced Topics in Computer Systems and Architecture COMP8712 Compiler Construction A maximum of 12 units from completion of courses from the following list: COMP6300 Computer Architecture COMP6310 Systems Networks and Concurrency COMP6330 Operating Systems Implementation COMP6331 Computer Networks COMP6361 Principles of Programming Languages COMP6464 High Performance Scientific Computing ENGN6213 Digital Systems and Microprocessors",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP8300",
+            "COMP8045",
+            "COMP8712",
+            "COMP6300",
+            "COMP6310",
+            "COMP6330",
+            "COMP6331",
+            "COMP6361",
+            "COMP6464",
+            "ENGN6213"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP8300",
+            "COMP8045",
+            "COMP8712",
+            "COMP6300",
+            "COMP6310",
+            "COMP6330",
+            "COMP6331",
+            "COMP6361",
+            "COMP6464",
+            "ENGN6213"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8300",
+            "COMP8045",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the second list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6300",
+            "COMP6310",
+            "COMP6330",
+            "COMP6331",
+            "COMP6361",
+            "COMP6464",
+            "ENGN6213"
+          ]
+        }
+      ]
+    }
+  ],
+  "COMP-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of: A minimum of 12 units of 8000 level courses A minimum of 12 units from completion of courses from the following list: COMP6361 Principles of Programming Languages COMP6363 Theory of Computation COMP8011 Advanced Topics in Formal Methods and Programming Languages COMP8460 Advanced Algorithms COMP8670 Advanced Topics in Logic and Computation MATH6114 Number Theory and Cryptography MATH8343 Foundations of Mathematics A maximum of 12 units from completion of courses from the following list: COMP6261 Information Theory COMP6262 Logic COMP6466 Algorithms",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "COMP8670",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "COMP8670",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the first list",
+          "units": 12,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "COMP8670",
+            "MATH6114",
+            "MATH8343"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the second list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6261",
+            "COMP6262",
+            "COMP6466"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of: A minimum of 12 units of 8000 level courses A minimum of 12 units from completion of courses from the following list: COMP6361 Principles of Programming Languages COMP6363 Theory of Computation COMP8011 Advanced Topics in Formal Methods and Programming Languages COMP8460 Advanced Algorithms MATH6114 Number Theory and Cryptography MATH8343 Foundations of Mathematics A maximum of 12 units from completion of courses from the following list: COMP6261 Information Theory COMP6262 Logic COMP6466 Algorithms COMP8712 Compiler Construction",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the first list",
+          "units": 12,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the second list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, of which: A minimum of 12 units must come from the completion of 8000-level courses. A minimum of 12 units from completion of courses from the following list: COMP6361 Principles of Programming Languages COMP6363 Theory of Computation COMP8011 Advanced Topics in Formal Methods and Programming Languages COMP8460 Advanced Algorithms MATH6114 Number Theory and Cryptography MATH8343 Foundations of Mathematics A maximum of 12 units from completion of courses from the following list: COMP6261 Information Theory COMP6262 Logic COMP6466 Algorithms COMP8712 Compiler Construction",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the two lists",
+          "units": 24,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343",
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the first list",
+          "units": 12,
+          "courses": [
+            "COMP6361",
+            "COMP6363",
+            "COMP8011",
+            "COMP8460",
+            "MATH6114",
+            "MATH8343"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the second list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6261",
+            "COMP6262",
+            "COMP6466",
+            "COMP8712"
+          ]
+        }
+      ]
+    }
+  ],
+  "DTSC-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of: 18 units from completion of the following compulsory courses: COMP8410 Data Mining COMP8430 Data Wrangling COMP6490 Document Analysis 6 units from completion of courses from the following list: COMP6320 Artificial Intelligence COMP8420 Bio Inspired Computing: Applications and Interfaces COMP8600 Introduction to Statistical Machine Learning COMP8620 Advanced Topics in Artificial Intelligence COMP8650 Advanced Topics in Statistical Machine Learning",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP8410",
+            "COMP8430",
+            "COMP6490",
+            "COMP6320",
+            "COMP8420",
+            "COMP8600",
+            "COMP8620",
+            "COMP8650"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory",
+          "units": 18,
+          "courses": [
+            "COMP8410",
+            "COMP8430",
+            "COMP6490"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the list",
+          "units": 6,
+          "courses": [
+            "COMP6320",
+            "COMP8420",
+            "COMP8600",
+            "COMP8620",
+            "COMP8650"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of 12 units of 8000-level courses 18 units from completion of the following compulsory courses: COMP6240 Relational Databases COMP8410 Data Mining COMP8430 Data Wrangling 6 units from completion of courses from the following list: COMP6490 Document Analysis COMP6670 Introduction to Machine Learning COMP8600 Statistical Machine Learning COMP8650 Advanced Topics in Machine Learning COMP8880 Computational Methods for Network Science STAT6039 Principles of Mathematical Statistics",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430",
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880",
+            "STAT6039"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430",
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880",
+            "STAT6039"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory",
+          "units": 18,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the list",
+          "units": 6,
+          "courses": [
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880",
+            "STAT6039"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of 12 units of 8000-level courses 18 units from completion of the following compulsory courses: COMP6240 Relational Databases COMP8410 Data Mining COMP8430 Data Wrangling 6 units from completion of courses from the following list: COMP6490 Document Analysis COMP6670 Introduction to Machine Learning COMP8600 Statistical Machine Learning COMP8650 Advanced Topics in Machine Learning COMP8880 Computational Methods for Network Science",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430",
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430",
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory",
+          "units": 18,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8430"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the list",
+          "units": 6,
+          "courses": [
+            "COMP6490",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of 12 units of 8000-level courses 18 units from completion of the following compulsory courses: COMP6240 Relational Databases COMP8410 Data Mining COMP8490 Document Analysis 6 units from completion of courses from the following list: COMP6434 Data Wrangling COMP6670 Introduction to Machine Learning COMP8600 Statistical Machine Learning COMP8650 Advanced Topics in Machine Learning COMP8880 Computational Methods for Network Science",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8490",
+            "COMP6434",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8490",
+            "COMP6434",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory",
+          "units": 18,
+          "courses": [
+            "COMP6240",
+            "COMP8410",
+            "COMP8490"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the list",
+          "units": 6,
+          "courses": [
+            "COMP6434",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        }
+      ]
+    }
+  ],
+  "HCCM-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must include: A minimum of 12 units of 8000-level courses: 6 units from completion of: COMP6390 Human-Computer Interaction 6 units from completion of courses from the following list: COMP6540 Game Development COMP6720 Art and Interaction Computing 12 units from completion of: COMP8350 Sound and Music Computing COMP8420 Neural Networks, Deep Learning and Bio-inspired Computing COMP8610 Computer Graphics",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6390",
+            "COMP6540",
+            "COMP6720",
+            "COMP8350",
+            "COMP8420",
+            "COMP8610"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6390",
+            "COMP6540",
+            "COMP6720",
+            "COMP8350",
+            "COMP8420",
+            "COMP8610"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "COMP6390",
+          "units": 6,
+          "courses": [
+            "COMP6390"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "COMP6540 or COMP6720",
+          "units": 6,
+          "courses": [
+            "COMP6540",
+            "COMP6720"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8350",
+            "COMP8420",
+            "COMP8610"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must include a minimum of 12 units of 8000-level courses: The 24 units must consist of: COMP6390 Human-Computer Interaction AND A minimum of 12 units from the following list: COMP8350 Sound and Music Computing COMP8539 Advanced Topics in Computer Vision COMP8610 Computer Graphics AND A maximum of 6 units from completion of courses from the following list: COMP6528 Computer Vision COMP6540 Game Development COMP6720 Art and Interaction Computing COMP6780 Web Programming and Design",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6390",
+            "COMP8350",
+            "COMP8539",
+            "COMP8610",
+            "COMP6528",
+            "COMP6540",
+            "COMP6720",
+            "COMP6780"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6390",
+            "COMP8350",
+            "COMP8539",
+            "COMP8610",
+            "COMP6528",
+            "COMP6540",
+            "COMP6720",
+            "COMP6780"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "COMP6390",
+          "units": 6,
+          "courses": [
+            "COMP6390"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8350",
+            "COMP8539",
+            "COMP8610"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the 6000-level list, at most",
+          "units": 6,
+          "courses": [
+            "COMP6528",
+            "COMP6540",
+            "COMP6720",
+            "COMP6780"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must include a minimum of 12 units of 8000-level courses: The 24 units must consist of: COMP6390 Human-Computer Interaction AND A minimum of 12 units from the following list: COMP8020 Advanced Topics in Human-Centred and Creative Computing COMP8350 Sound and Music Computing COMP8539 Advanced Topics in Computer Vision COMP8610 Computer Graphics AND A maximum of 6 units from completion of courses from the following list: COMP6528 Computer Vision COMP6540 Game Development COMP6720 Art and Interaction Computing",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6390",
+            "COMP8020",
+            "COMP8350",
+            "COMP8539",
+            "COMP8610",
+            "COMP6528",
+            "COMP6540",
+            "COMP6720"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6390",
+            "COMP8020",
+            "COMP8350",
+            "COMP8539",
+            "COMP8610",
+            "COMP6528",
+            "COMP6540",
+            "COMP6720"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "COMP6390",
+          "units": 6,
+          "courses": [
+            "COMP6390"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "From the 8000-level list",
+          "units": 12,
+          "courses": [
+            "COMP8020",
+            "COMP8350",
+            "COMP8539",
+            "COMP8610"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the 6000-level list, at most",
+          "units": 6,
+          "courses": [
+            "COMP6528",
+            "COMP6540",
+            "COMP6720"
+          ]
+        }
+      ]
+    }
+  ],
+  "MCHL-SPEC": [
+    {
+      "text": "Requirements This Specialization requires the completion of 24 units from the following list which must include: A minimum of 12 units of 8000-level courses. COMP6261 Information Theory COMP6490 Document Analysis COMP6528 Computer Vision COMP6670 Introduction to Machine Learning COMP8420 Neural Networks, Deep Learning and Bio-inspired Computing COMP8600 Statistical Machine Learning COMP8650 Advanced Topics in Machine Learning COMP8880 Computational Methods for Network Science",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the list",
+          "units": 24,
+          "courses": [
+            "COMP6261",
+            "COMP6490",
+            "COMP6528",
+            "COMP6670",
+            "COMP8420",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6261",
+            "COMP6490",
+            "COMP6528",
+            "COMP6670",
+            "COMP8420",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This Specialisation requires the completion of 24 units from the following list which must include: A minimum of 12 units of 8000-level courses. COMP6261 Information Theory COMP6490 Document Analysis COMP6528 Computer Vision COMP6670 Introduction to Machine Learning COMP8600 Statistical Machine Learning COMP8650 Advanced Topics in Machine Learning COMP8880 Computational Methods for Network Science",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the list",
+          "units": 24,
+          "courses": [
+            "COMP6261",
+            "COMP6490",
+            "COMP6528",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "courses": [
+            "COMP6261",
+            "COMP6490",
+            "COMP6528",
+            "COMP6670",
+            "COMP8600",
+            "COMP8650",
+            "COMP8880"
+          ]
+        }
+      ]
+    }
+  ],
+  "MCOMP": [
+    {
+      "text": "Program Requirements The Master of Computing requires the completion of 96 units, of which: A minimum of 24 units must come from completion of 8000-level COMP courses, or non-COMP courses included in the Specialisations. The 96 units must consist of: 24 units from completion of the following compulsory courses: COMP6250 Professional Practice: Holistic Thinking and Communication COMP6442 Software Construction COMP6710 Structured Programming COMP8260 Professional Practice: Responsible Innovation & Leadership 6 units from one of the following foundational courses: MATH6005 Discrete Mathematics Models COMP6260 Foundations of Computing 12 units from one of the following project courses: COMP8715 Advanced Computing Team Project COMP8830 Computing Internship 24 units from the completion of one of the following Specialisations: Artificial Intelligence Computer Systems Computational Foundations Data Science Human Centred and Creative Computing Machine Learning Professional Computing 18 units from completion of further courses from the subject area COMP Computer Science, or non-COMP courses included in specialisation lists.. 12 units from completion of elective courses offered by ANU. Unless otherwise stated, a course used to satisfy the requirements of one specialisation may not be double counted towards satisfying the requirements of another specialisation.",
+      "reading": "The 8000-level minimum and the further 18 units both count non-COMP courses from the chosen specialisation's lists, as the wording says.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Total units",
+          "units": 96
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level COMP or specialisation courses",
+          "units": 24,
+          "level": 8000,
+          "subjects": [
+            "COMP",
+            "SPEC"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory courses",
+          "units": 24,
+          "courses": [
+            "COMP6250",
+            "COMP6442",
+            "COMP6710",
+            "COMP8260"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Foundational course (MATH6005 or COMP6260)",
+          "units": 6,
+          "courses": [
+            "MATH6005",
+            "COMP6260"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Project course (COMP8715 or COMP8830)",
+          "units": 12,
+          "courses": [
+            "COMP8715",
+            "COMP8830"
+          ]
+        },
+        {
+          "kind": "specialisation",
+          "label": "Specialisation",
+          "units": 24
+        },
+        {
+          "kind": "further",
+          "label": "Further COMP or specialisation courses",
+          "units": 18,
+          "level": 6000,
+          "subjects": [
+            "COMP",
+            "SPEC"
+          ]
+        },
+        {
+          "kind": "electives",
+          "label": "Electives",
+          "units": 12
+        }
+      ]
+    },
+    {
+      "text": "Program Requirements The Master of Computing requires the completion of 96 units, of which: A minimum of 24 units must come from completion of 8000-level COMP courses. The 96 units must consist of: 24 units from completion of the following compulsory courses: COMP6250 - Professional Practice: Holistic Thinking and Communication COMP6442 Software Construction COMP6710 Structured Programming COMP8260 - Professional Practice: Responsible Innovation & Leadership 6 units from one of the following foundational courses: MATH6005 Discrete Mathematics Models COMP6260 Foundations of Computing 12 units from one of the following project courses: COMP8715 Advanced Computing Team Project COMP8830 Computing Internship 24 units from the completion of one of the following Specialisations: Artificial Intelligence Computer Systems Computational Foundations Data Science Human Centred and Creative Computing Machine Learning Professional Computing 18 units from completion of further 6000, 7000 or 8000 level courses from the subject area COMP Computer Science or ENGN Engineering 12 units from completion of elective courses offered by ANU. A course used to satisfy the requirements of one specialisation may not be double counted towards satisfying the requirements of another specialisation.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Total units",
+          "units": 96
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level COMP courses",
+          "units": 24,
+          "level": 8000,
+          "subjects": [
+            "COMP"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory courses",
+          "units": 24,
+          "courses": [
+            "COMP6250",
+            "COMP6442",
+            "COMP6710",
+            "COMP8260"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Foundational course (MATH6005 or COMP6260)",
+          "units": 6,
+          "courses": [
+            "MATH6005",
+            "COMP6260"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Project course (COMP8715 or COMP8830)",
+          "units": 12,
+          "courses": [
+            "COMP8715",
+            "COMP8830"
+          ]
+        },
+        {
+          "kind": "specialisation",
+          "label": "Specialisation",
+          "units": 24
+        },
+        {
+          "kind": "further",
+          "label": "Further 6000–8000-level COMP or ENGN courses",
+          "units": 18,
+          "level": 6000,
+          "subjects": [
+            "COMP",
+            "ENGN"
+          ]
+        },
+        {
+          "kind": "electives",
+          "label": "Electives",
+          "units": 12
+        }
+      ]
+    },
+    {
+      "text": "Program Requirements The Master of Computing requires the completion of 96 units, of which: A minimum of 24 units must come from completion of 8000-level COMP courses. 30 units from completion of the following compulsory courses: COMP6120 Software Engineering (6 units) COMP6442 Software Construction (6 units) COMP7710 Structured Programming (12 units) COMP8280 Responsible Practice, Innovation and Leadership (6 units) A minimum of 6 units from completion of foundational courses in the following list: MATH6005 Discrete Mathematics Models (6 units) COMP6260 Foundations of Computing (6 units) A maximum of 12 units from completion of project courses from the following list: COMP8715 Advanced Computing Team Project, which must be completed twice, in consecutive semesters (6+6 units) COMP8830 Computing Internship (12 units) 24 units from the completion of one of the following Specialisations: Artificial Intelligence Computer Systems Computational Foundations Data Science Human Centred and Creative Computing Machine Learning Software Development 18 units from completion of further 6000, 7000 or 8000 level courses from the following subject areas: COMP Computer Science ENGN Engineering 6 units from completion of elective courses offered by ANU.",
+      "reading": "COMP8715 is taken twice, in consecutive semesters, and counts both times.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Total units",
+          "units": 96
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level COMP courses",
+          "units": 24,
+          "level": 8000,
+          "subjects": [
+            "COMP"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Compulsory courses",
+          "units": 30,
+          "courses": [
+            "COMP6120",
+            "COMP6442",
+            "COMP7710",
+            "COMP8280"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Foundational courses (MATH6005 or COMP6260)",
+          "units": 6,
+          "courses": [
+            "MATH6005",
+            "COMP6260"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "Project courses, at most",
+          "units": 12,
+          "courses": [
+            "COMP8715",
+            "COMP8830"
+          ]
+        },
+        {
+          "kind": "specialisation",
+          "label": "Specialisation",
+          "units": 24
+        },
+        {
+          "kind": "further",
+          "label": "Further 6000–8000-level COMP or ENGN courses",
+          "units": 18,
+          "level": 6000,
+          "subjects": [
+            "COMP",
+            "ENGN"
+          ]
+        },
+        {
+          "kind": "electives",
+          "label": "Electives",
+          "units": 6
+        }
+      ]
+    }
+  ],
+  "PCOM-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of: 12 units from completion of the following software engineering course(s): COMP6120 Software Engineering COMP8110 Managing Software Projects in a System Context 6 units from completion of the following database course(s): COMP6240 Relational Databases COMP6420 Introduction to Data Management, Analysis and Security 6 units from completion of the following networks course(s): COMP6331 Computer Networks COMP6340 Networked Information Systems",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "From the lists",
+          "units": 24,
+          "courses": [
+            "COMP6120",
+            "COMP8110",
+            "COMP6240",
+            "COMP6420",
+            "COMP6331",
+            "COMP6340"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "Software engineering: COMP6120 and COMP8110",
+          "units": 12,
+          "courses": [
+            "COMP6120",
+            "COMP8110"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Databases: COMP6240 or COMP6420",
+          "units": 6,
+          "courses": [
+            "COMP6240",
+            "COMP6420"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "Networks: COMP6331 or COMP6340",
+          "units": 6,
+          "courses": [
+            "COMP6331",
+            "COMP6340"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of a minimum of 12 units of 8000 level courses. The 24 units must consist of: 12 units from the following compulsory courses COMP6120 Software Engineering (6 units) ENGN8100 Introduction to Systems Engineering (6 units) AND 6 units from completion of a course from the following list: COMP6240 Relational Databases (6 units) COMP6331 Computer Networks (6 units) COMP6390 Human-Computer Interaction (6 units) INFS8004 Enterprise Systems and Strategy (6 units) INFS8205 Digital Strategy, Executive and Operations (6 units) LAWS8445 Information Technology Law (6 units) MGMT7020 Technology and Project Management (6 units) REGN8014 Contemporary Issues in Technology Governance (6 units) AND 6 units from completion of any 8000 level COMP coded course excluding project courses ( COMP8715 , COMP8800 , COMP8830 ).",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Units",
+          "units": 24
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "subjects": [
+            "COMP",
+            "ENGN",
+            "INFS",
+            "LAWS",
+            "MGMT",
+            "REGN"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "COMP6120 and ENGN8100",
+          "units": 12,
+          "courses": [
+            "COMP6120",
+            "ENGN8100"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "One course from the list",
+          "units": 6,
+          "courses": [
+            "COMP6240",
+            "COMP6331",
+            "COMP6390",
+            "INFS8004",
+            "INFS8205",
+            "LAWS8445",
+            "MGMT7020",
+            "REGN8014"
+          ]
+        },
+        {
+          "kind": "further",
+          "label": "An 8000-level COMP course, not a project",
+          "units": 6,
+          "level": 8000,
+          "subjects": [
+            "COMP"
+          ],
+          "exclude": [
+            "COMP8715",
+            "COMP8800",
+            "COMP8830"
+          ]
+        }
+      ]
+    },
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of a minimum of 12 units of 8000 level courses. The 24 units must consist of: 12 units from the following compulsory courses COMP6120 Software Engineering (6 units) ENGN8100 Introduction to Systems Engineering (6 units) AND 6 units from completion of a course from the following list: COMP6240 Relational Databases (6 units) COMP6331 Computer Networks (6 units) COMP6390 Human-Computer Interaction (6 units) INFS8004 Enterprise Systems and Strategy (6 units) INFS8205 Digital Strategy, Executive and Operations (6 units) LAWS8445 Information Technology Law (6 units) MGMT7020 Technology and Project Management (6 units) REGN8014 Contemporary Issues in Technology Governance (6 units) AND 6 units from completion of any 8000 level COMP coded course excluding project courses ( COMP8715 , COMP8800 , COMP8830 ). 12 units from completion of the following course(s): Code Title Units COMP6240 Relational Databases 6 COMP 8110: Managing Software Projects in 6 units from completion of the following course(s): Code Title Units COMP6331 Computer Networks 6 COMP 6340: Networked Information Systems 6 units from completion of the following course(s): Code Title Units COMP 6311: Software Analysis Design COMP 8190: Software Development",
+      "reading": "The page repeats the 2025 rules and then trails into fragments of an older table (\"COMP 8110: Managing Software Projects in\", \"COMP 8190: Software Development\") with no rule attached; the coherent first part is what is encoded. The program's own requirements no longer name Professional Computing, so it is not offered as a choice.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Units",
+          "units": 24
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "subjects": [
+            "COMP",
+            "ENGN",
+            "INFS",
+            "LAWS",
+            "MGMT",
+            "REGN"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "COMP6120 and ENGN8100",
+          "units": 12,
+          "courses": [
+            "COMP6120",
+            "ENGN8100"
+          ]
+        },
+        {
+          "kind": "min_from",
+          "label": "One course from the list",
+          "units": 6,
+          "courses": [
+            "COMP6240",
+            "COMP6331",
+            "COMP6390",
+            "INFS8004",
+            "INFS8205",
+            "LAWS8445",
+            "MGMT7020",
+            "REGN8014"
+          ]
+        },
+        {
+          "kind": "further",
+          "label": "An 8000-level COMP course, not a project",
+          "units": 6,
+          "level": 8000,
+          "subjects": [
+            "COMP"
+          ],
+          "exclude": [
+            "COMP8715",
+            "COMP8800",
+            "COMP8830"
+          ]
+        }
+      ]
+    }
+  ],
+  "SOFT-SPEC": [
+    {
+      "text": "Requirements This specialisation requires the completion of 24 units, which must consist of a minimum of 12 units of 8000-level courses. The 24 units must consist of: 12 units from completion of the following compulsory courses: COMP6120 Software Engineering (6 units) ENGN8100 Introduction to Systems Engineering (6 units) 6 units from completion of an 8000-level course from the subject area COMP Computing, excluding the project courses ( COMP8715 , COMP8800 , COMP8830 ). A maximum of 12 units from completion of courses from the following list: COMP6240 Relational Databases (6 units) COMP6331 Computer Networks (6 units) COMP6390 Human-Computer Interaction (6 units) INFS8004 Enterprise Systems and Strategy (6 units) INFS8205 Digital Strategy, Executive and Operations (6 units) LAWS8445 Information Technology Law (6 units) MGMT7020 Technology and Project Management (6 units) REGN8014 Contemporary Issues in Technology Governance (6 units) Note: MCOMP students who complete COMP6120 as part of their program rules need to replace it with 6 units of 6000/8000 COMP.",
+      "reading": "The page notes that Master of Computing students, who already count COMP6120 as compulsory, replace it here with 6 more units of 6000/8000-level COMP. That replacement is what is encoded, since this site models only the Master of Computing.",
+      "rules": [
+        {
+          "kind": "total",
+          "label": "Units",
+          "units": 24
+        },
+        {
+          "kind": "min_level",
+          "label": "8000-level",
+          "units": 12,
+          "level": 8000,
+          "subjects": [
+            "COMP",
+            "ENGN",
+            "INFS",
+            "LAWS",
+            "MGMT",
+            "REGN"
+          ]
+        },
+        {
+          "kind": "compulsory",
+          "label": "ENGN8100",
+          "units": 6,
+          "courses": [
+            "ENGN8100"
+          ]
+        },
+        {
+          "kind": "further",
+          "label": "An 8000-level COMP course, not a project",
+          "units": 6,
+          "level": 8000,
+          "subjects": [
+            "COMP"
+          ],
+          "exclude": [
+            "COMP8715",
+            "COMP8800",
+            "COMP8830"
+          ]
+        },
+        {
+          "kind": "max_from",
+          "label": "From the list, at most",
+          "units": 12,
+          "courses": [
+            "COMP6240",
+            "COMP6331",
+            "COMP6390",
+            "INFS8004",
+            "INFS8205",
+            "LAWS8445",
+            "MGMT7020",
+            "REGN8014"
+          ]
+        },
+        {
+          "kind": "further",
+          "label": "In place of COMP6120: 6000/8000-level COMP",
+          "units": 6,
+          "level": 6000,
+          "subjects": [
+            "COMP"
+          ],
+          "exclude": [
+            "COMP8715",
+            "COMP8800",
+            "COMP8830"
+          ]
+        }
+      ]
+    }
+  ]
+}

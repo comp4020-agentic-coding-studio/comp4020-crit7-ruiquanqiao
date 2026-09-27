@@ -1,0 +1,25 @@
+---
+import { type CatalogCourse, HANDBOOK_YEARS } from "../lib/catalog";
+
+// A course's offerings across every handbook year held: the pattern ("only
+// ever Semester 2") is what a student needs when planning years ahead.
+interface Props {
+  course: CatalogCourse;
+}
+const { course } = Astro.props;
+const cells = HANDBOOK_YEARS.map((year) => {
+  const version = course.versions.get(year);
+  return { year, state: !version ? "absent" : version.sessions.length ? version.sessions.join(" ") : "none" };
+});
+---
+
+<ul class="history" aria-label="Offered in each handbook year">
+  {
+    cells.map(({ year, state }) => (
+      <li data-state={state === "absent" ? "absent" : state === "none" ? "none" : "offered"}>
+        <span class="history-year">{year}</span>
+        <span class="history-sessions">{state === "absent" ? "not listed" : state === "none" ? "not offered" : state}</span>
+      </li>
+    ))
+  }
+</ul>
