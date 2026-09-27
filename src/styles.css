@@ -689,3 +689,18 @@ blockquote {
   max-width: 100%;
   height: auto;
 }
+
+/* A <select> is as wide as its longest option, and a grid item won't shrink
+   below its content by default: together they pushed the plan to 739px wide
+   on a 390px phone. */
+.plan-layout > *,
+.term {
+  min-width: 0;
+}
+
+.add-form select,
+.item-controls select {
+  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
+}
