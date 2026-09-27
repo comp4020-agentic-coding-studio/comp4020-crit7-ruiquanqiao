@@ -18,7 +18,16 @@ describe("catalog", () => {
     expect(doc.querySelectorAll(".course-card").length).toBeGreaterThanOrEqual(60);
     const older = (await page("/?year=2024")).doc;
     expect(older.querySelector('.course-card[data-course="COMP8260"]')).toBeTruthy();
-    expect(doc.querySelector('.course-card[data-course="COMP8280"] .history')).toBeTruthy();
+    expect(doc.querySelector('.course-card[data-course="COMP8280"] .history-line')?.textContent).toMatch(/2025 –.*2026 S1 S2/);
+  });
+
+  it("keeps the course list light enough for the accessibility check", async () => {
+    // spec/invariants.test.ts runs axe over "/" in jsdom, whose time grows with
+    // the DOM. At 1664 nodes it took 2.5s here and 5.7s on the CI runner,
+    // past vitest's 5s limit, and the deploy never ran. The per-year history
+    // on each card was most of it; it is one line of text now.
+    const { doc } = await page("/");
+    expect(doc.querySelectorAll("*").length).toBeLessThan(800);
   });
 
   it("filters by semester", async () => {

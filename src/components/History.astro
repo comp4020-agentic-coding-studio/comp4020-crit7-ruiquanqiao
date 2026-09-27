@@ -5,14 +5,24 @@ import { type CatalogCourse, HANDBOOK_YEARS } from "../lib/catalog";
 // ever Semester 2") is what a student needs when planning years ahead.
 interface Props {
   course: CatalogCourse;
+  // one line of text instead of a cell per year: the course list renders 76
+  // of these, and every extra node slows the accessibility check (see
+  // spec/catalog.test.ts)
+  compact?: boolean;
 }
-const { course } = Astro.props;
+const { course, compact = false } = Astro.props;
 const cells = HANDBOOK_YEARS.map((year) => {
   const version = course.versions.get(year);
   return { year, state: !version ? "absent" : version.sessions.length ? version.sessions.join(" ") : "none" };
 });
 ---
 
+{
+  compact ? (
+    <p class="history-line">
+      {cells.map(({ year, state }) => `${year} ${state === "absent" ? "–" : state === "none" ? "not offered" : state}`).join(" · ")}
+    </p>
+  ) : (
 <ul class="history" aria-label="Offered in each handbook year">
   {
     cells.map(({ year, state }) => (
@@ -23,3 +33,5 @@ const cells = HANDBOOK_YEARS.map((year) => {
     ))
   }
 </ul>
+  )
+}

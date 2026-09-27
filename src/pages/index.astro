@@ -77,7 +77,7 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
   </form>
 
   <p class="count">
-    {courses.length} courses in the {year} handbook · snapshots taken {scraped}
+    {courses.length} {courses.length === 1 ? "course" : "courses"} in the {year} handbook · snapshots taken {scraped}
   </p>
 
   <ul class="course-list">
@@ -102,7 +102,7 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
               <span class="chip chip-units">{v?.units} units</span>
               {v?.tree ? <span class="chip">Has prerequisites</span> : <span class="chip chip-open">No prerequisites</span>}
             </p>
-            <History course={course} />
+            <History course={course} compact />
             {plan &&
               (inPlan ? (
                 <p class={inPlan.warnings.length ? "fit fit-warn" : "fit fit-ok"}>
