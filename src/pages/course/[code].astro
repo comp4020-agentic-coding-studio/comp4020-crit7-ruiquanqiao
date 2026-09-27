@@ -1,0 +1,184 @@
+---
+import RequisiteTree from "../../components/RequisiteTree.astro";
+import Base from "../../layouts/Base.astro";
+import { getCourse, HANDBOOK_YEAR, unlocks } from "../../lib/catalog";
+import { earliestTerm, getItems, getPlan, judge, meets, needsMessage, termLabel, termsFrom } from "../../lib/planner";
+import { PROGRAMS } from "../../lib/requisites";
+
+const code = (Astro.params.code ?? "").toUpperCase();
+const course = getCourse(code);
+if (!course) {
+  return new Response(null, { status: 404, statusText: "No such course" });
+}
+
+const planId = Astro.cookies.get("plan")?.value;
+const plan = planId && planId !== "example" ? getPlan(planId) : undefined;
+const items = plan ? getItems(plan.id) : [];
+const placed = items.find((i) => i.courseCode === course.code);
+const earliest = plan && !placed ? earliestTerm(course, plan, items) : null;
+const judgeTerm = placed?.term ?? earliest ?? (plan ? termsFrom(plan.startTerm).at(-1) : undefined);
+const ctx =
+  plan && judgeTerm
+    ? {
+        done: new Set(items.filter((i) => i.term < judgeTerm).map((i) => i.courseCode)),
+        now: new Set(items.filter((i) => i.term === judgeTerm).map((i) => i.courseCode)),
+        program: plan.program,
+      }
+    : undefined;
+const warnings = placed && plan ? judge(course, placed.term, items, plan.program) : [];
+const unlocked = unlocks(course.code);
+const excluded = course.excludedPrograms.split(",").filter(Boolean);
+const source = `https://programsandcourses.anu.edu.au/${HANDBOOK_YEAR}/course/${course.code}`;
+const sourceLabel = {
+  parsed: "Read automatically from the handbook text",
+  "hand-checked": "The handbook text is ambiguous; this is a person's reading of it",
+  none: "No prerequisites",
+}[course.requisiteSource];
+---
+
+<Base title={course.stub ? course.code : `${course.code} ${course.name}`}>
+  <p class="breadcrumb"><a href="/">All courses</a></p>
+  {
+    course.stub ? (
+      <>
+        <h1>
+          <span class="code">{course.code}</span>
+        </h1>
+        <p class="lede">
+          This course is named in another course's rules but isn't one of the {HANDBOOK_YEAR} postgraduate courses
+          this site holds: it is undergraduate, from another subject, or no longer in the handbook. Only its code
+          is known here.
+        </p>
+        <p>
+          <a href={source}>Look it up on Programs and Courses</a>
+        </p>
+      </>
+    ) : (
+      <>
+        <h1>
+          <span class="code">{course.code}</span> {course.name}
+        </h1>
+        <p class="chips">
+          {course.sessions.length ? (
+            course.sessions.map((s) => <span class={`chip chip-${s}`}>{s}</span>)
+          ) : (
+            <span class="chip chip-off">Not offered in {HANDBOOK_YEAR}</span>
+          )}
+          <span class="chip chip-units">{course.units} units</span>
+          <span class="chip">{course.level}-level</span>
+        </p>
+        <p>{course.description}</p>
+
+        {plan && (
+          <section class="plan-box" aria-labelledby="plan-heading">
+            <h2 id="plan-heading">In your plan</h2>
+            {placed ? (
+              <p>
+                Planned for <strong>{termLabel(placed.term)}</strong>.
+                {warnings.length === 0 && " Nothing stands in the way."}
+              </p>
+            ) : earliest ? (
+              <p>
+                The earliest semester your plan allows is <strong>{termLabel(earliest)}</strong>.
+              </p>
+            ) : (
+              <p>
+                Your plan doesn't lead here yet.
+                {course.tree && ctx && !meets(course.tree, ctx) && ` ${needsMessage(course.tree, ctx)}`}
+              </p>
+            )}
+            {warnings.length > 0 && (
+              <ul class="warnings">
+                {warnings.map((w) => (
+                  <li data-warning={w.kind}>{w.message}</li>
+                ))}
+              </ul>
+            )}
+            <form method="post" action={`/api/plans/${plan.id}/items`}>
+              <input type="hidden" name="course" value={course.code} />
+              <input type="hidden" name="back" value={`/course/${course.code}`} />
+              <label for="term">{placed ? "Move to" : "Add to"}</label>
+              <select id="term" name="term">
+                {termsFrom(plan.startTerm).map((term) => (
+                  <option value={term} selected={term === (placed?.term ?? earliest)}>
+                    {termLabel(term)}
+                  </option>
+                ))}
+              </select>
+              <button>{placed ? "Move" : "Add to plan"}</button>
+            </form>
+          </section>
+        )}
+
+        <section aria-labelledby="req-heading">
+          <h2 id="req-heading">Prerequisites</h2>
+          <p class="source-note" data-source={course.requisiteSource}>
+            {sourceLabel}
+            {ctx && course.tree && ` · ticks show what your plan has by ${judgeTerm ? termLabel(judgeTerm) : "then"}`}
+          </p>
+          {course.tree ? (
+            <div class="req-tree">
+              <RequisiteTree req={course.tree} ctx={ctx} />
+            </div>
+          ) : (
+            <p>None: anyone in a postgraduate program can enrol{excluded.length ? ", with the exception below" : ""}.</p>
+          )}
+          {course.requisiteReading && <p class="reading">Why it's read this way: {course.requisiteReading}</p>}
+          {course.caveat && (
+            <p class="caveat">
+              The handbook also asks for something this site can't check (a permission code, a GPA, group
+              membership or "equivalent" study). Read the original below.
+            </p>
+          )}
+          {excluded.length > 0 && (
+            <p class="caveat">Closed to students in the {excluded.map((p) => PROGRAMS[p] ?? p).join(", ")}.</p>
+          )}
+          {course.incompatible.length > 0 && (
+            <p>
+              Incompatible with{" "}
+              {course.incompatible.map((other, i) => (
+                <>
+                  {i > 0 && ", "}
+                  <a href={`/course/${other}`} class="code">
+                    {other}
+                  </a>
+                </>
+              ))}
+              : you can't count both.
+            </p>
+          )}
+          {course.requisiteText && (
+            <details>
+              <summary>The handbook's original wording</summary>
+              <blockquote>{course.requisiteText}</blockquote>
+            </details>
+          )}
+        </section>
+
+        <section aria-labelledby="unlocks-heading">
+          <h2 id="unlocks-heading">What it leads to</h2>
+          {unlocked.length ? (
+            <>
+              <p>These courses name {course.code} in their prerequisites:</p>
+              <ul class="unlocks">
+                {unlocked.map((c) => (
+                  <li>
+                    <a href={`/course/${c.code}`}>
+                      <span class="code">{c.code}</span> {c.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p>No course names {course.code} in its prerequisites.</p>
+          )}
+        </section>
+
+        <p class="source-link">
+          <a href={source}>{course.code} on Programs and Courses</a>
+        </p>
+      </>
+    )
+  }
+</Base>

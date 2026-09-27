@@ -1,0 +1,49 @@
+---
+import { describeLeaf, meets } from "../lib/planner";
+import type { Req } from "../lib/requisites";
+import { getCourse } from "../lib/catalog";
+
+interface Props {
+  req: Req;
+  // what the student will have by then; omitted when there's no plan to judge by
+  ctx?: Parameters<typeof meets>[1];
+}
+const { req, ctx } = Astro.props;
+const state = ctx ? (meets(req, ctx) ? "met" : "unmet") : undefined;
+const mark = state === "met" ? "✓" : state === "unmet" ? "✗" : undefined;
+---
+
+{
+  req.kind === "all" || req.kind === "any" ? (
+    <div class={`req-group req-${req.kind}`} data-state={state}>
+      <p class="req-label">
+        {mark && <span class="req-mark" aria-hidden="true">{mark}</span>}
+        {req.kind === "all" ? "All of" : "One of"}
+        {state && <span class="visually-hidden">({state})</span>}
+      </p>
+      <ul>
+        {req.of.map((child) => (
+          <li>
+            <Astro.self req={child} ctx={ctx} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  ) : (
+    <span class="req-leaf" data-state={state}>
+      {mark && <span class="req-mark" aria-hidden="true">{mark}</span>}
+      {req.kind === "course" ? (
+        <>
+          <a href={`/course/${req.code}`} class="code">
+            {req.code}
+          </a>
+          {getCourse(req.code)?.stub ? null : <span class="leaf-name">{getCourse(req.code)?.name}</span>}
+          {req.concurrent && <span class="leaf-note">or in the same semester</span>}
+        </>
+      ) : (
+        describeLeaf(req)
+      )}
+      {state && <span class="visually-hidden">({state})</span>}
+    </span>
+  )
+}

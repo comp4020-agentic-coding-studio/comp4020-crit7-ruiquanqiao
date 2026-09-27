@@ -1,0 +1,43 @@
+---
+import "../styles.css";
+
+interface Props {
+  title: string;
+  wide?: boolean;
+}
+const { title, wide = false } = Astro.props;
+const planId = Astro.cookies.get("plan")?.value;
+const path = Astro.url.pathname;
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · Prereq</title>
+  </head>
+  <body>
+    <header class="masthead">
+      <a class="wordmark" href="/">Prereq<span>ANU courses, with the rules built in</span></a>
+      <nav aria-label="site">
+        <a href="/" aria-current={path === "/" ? "page" : undefined}>Courses</a>
+        {
+          planId ? (
+            <a href={`/plan/${planId}`} aria-current={path === `/plan/${planId}` ? "page" : undefined}>
+              My plan
+            </a>
+          ) : (
+            <a href="/plan/example" aria-current={path === "/plan/example" ? "page" : undefined}>
+              Example plan
+            </a>
+          )
+        }
+        <a href="/readme/" aria-current={path === "/readme/" ? "page" : undefined}>About</a>
+      </nav>
+    </header>
+    <main class={wide ? "wide" : undefined}>
+      <slot />
+    </main>
+  </body>
+</html>

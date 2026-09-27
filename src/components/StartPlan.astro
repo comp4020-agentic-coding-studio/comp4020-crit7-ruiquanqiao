@@ -1,0 +1,13 @@
+---
+import { termLabel } from "../lib/planner";
+
+const STARTS = ["2025-S1", "2025-S2", "2026-S1", "2026-S2", "2027-S1", "2027-S2"];
+---
+
+<form method="post" action="/api/plans" class="start-plan">
+  <label for="start">I started, or will start, my Master of Computing in</label>
+  <select id="start" name="start">
+    {STARTS.map((term) => <option value={term} selected={term === "2027-S1"}>{termLabel(term)}</option>)}
+  </select>
+  <button>Start a plan</button>
+</form>

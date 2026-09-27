@@ -274,8 +274,7 @@ export function parseRequisite(raw: string): ParsedRequisite {
     });
     const found = trees.filter((t): t is Req => t !== null);
     if (found.length === 0) return { ...base, status: "none", tree: null, reason: null };
-    trees.splice(0, trees.length, ...found);
-    const tree = trees.length === 1 ? trees[0] : combine(trees, trees.slice(1).map(() => "and"), "across sentences");
+    const tree = found.length === 1 ? found[0] : combine(found, found.slice(1).map(() => "and"), "across sentences");
     return { ...base, status: "parsed", tree, reason: null };
   } catch (error) {
     if (!(error instanceof Ambiguous)) throw error;

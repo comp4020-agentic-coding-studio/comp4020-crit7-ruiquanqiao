@@ -1,0 +1,190 @@
+---
+import Base from "../../layouts/Base.astro";
+import { listedCourses } from "../../lib/catalog";
+import { EXAMPLE_ID, getPlan, judgedItems, termLabel, termSession, termsFrom } from "../../lib/planner";
+import { MCOMP_SOURCE, MCOMP_UNCHECKED, mcompProgress } from "../../lib/programs";
+
+const plan = getPlan(Astro.params.id ?? "");
+if (!plan) {
+  return new Response(null, { status: 404, statusText: "No such plan" });
+}
+const readOnly = plan.id === EXAMPLE_ID;
+const mine = Astro.cookies.get("plan")?.value === plan.id;
+const items = judgedItems(plan);
+const terms = termsFrom(plan.startTerm);
+const beyond = items.filter((i) => !terms.includes(i.term));
+const progress = mcompProgress(items);
+const problems = items.reduce((n, i) => n + i.warnings.length, 0);
+const inPlan = new Set(items.map((i) => i.courseCode));
+const addable = listedCourses().filter((c) => !inPlan.has(c.code));
+const action = `/api/plans/${plan.id}/items`;
+const back = `/plan/${plan.id}`;
+---
+
+<Base title={readOnly ? "Example plan" : "My plan"} wide>
+  <h1>{readOnly ? "Example plan" : mine ? "My plan" : "A shared plan"}</h1>
+  <p class="lede">
+    Master of Computing, starting {termLabel(plan.startTerm)}.
+    {
+      readOnly
+        ? " A complete path that clears every check. Copy it to change it."
+        : " Add courses to a semester and each one is checked against the handbook's rules for when it runs and what it needs first."
+    }
+  </p>
+
+  <div class="plan-actions">
+    {
+      readOnly ? (
+        <form method="post" action="/api/plans">
+          <input type="hidden" name="copy" value={plan.id} />
+          <button>Copy this plan and edit it</button>
+        </form>
+      ) : (
+        <p>
+          This plan lives at its own address: <a href={back}>bookmark or share it</a>.
+        </p>
+      )
+    }
+    <p class="summary" data-problems={problems}>
+      {items.length} courses · {problems === 0 ? "no problems found" : `${problems} problem${problems > 1 ? "s" : ""} found`}
+    </p>
+  </div>
+
+  <div class="plan-layout">
+    <div class="terms">
+      {
+        terms.map((term) => {
+          const here = items.filter((i) => i.term === term);
+          const units = here.reduce((sum, i) => sum + i.course.units, 0);
+          const headingId = `term-${term}`;
+          return (
+            <section class="term" aria-labelledby={headingId} data-term={term}>
+              <h2 id={headingId}>
+                {termLabel(term)} <span class="term-units">{units} units</span>
+              </h2>
+              {units > 24 && <p class="overload">More than the usual full-time load of 24 units.</p>}
+              <ul class="term-items">
+                {here.map((item) => (
+                  <li class="plan-item" data-course={item.courseCode} data-status={item.warnings.length ? "warn" : "ok"}>
+                    <div class="plan-item-head">
+                      <a href={`/course/${item.courseCode}`}>
+                        <span class="code">{item.courseCode}</span> {item.course.name}
+                      </a>
+                      <span class="item-units">{item.course.units}u</span>
+                    </div>
+                    {item.warnings.length > 0 && (
+                      <ul class="warnings">
+                        {item.warnings.map((w) => (
+                          <li data-warning={w.kind}>{w.message}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {item.course.caveat && item.warnings.length === 0 && (
+                      <p class="item-note">Also needs something this site can't check; see the course page.</p>
+                    )}
+                    {!readOnly && (
+                      <div class="item-controls">
+                        <form method="post" action={action}>
+                          <input type="hidden" name="course" value={item.courseCode} />
+                          <input type="hidden" name="back" value={back} />
+                          <label class="visually-hidden" for={`move-${item.courseCode}`}>
+                            Move {item.courseCode} to
+                          </label>
+                          <select id={`move-${item.courseCode}`} name="term">
+                            {terms.map((t) => (
+                              <option value={t} selected={t === term}>
+                                {termLabel(t)}
+                              </option>
+                            ))}
+                          </select>
+                          <button>Move</button>
+                        </form>
+                        <form method="post" action={action}>
+                          <input type="hidden" name="course" value={item.courseCode} />
+                          <input type="hidden" name="back" value={back} />
+                          <input type="hidden" name="remove" value="1" />
+                          <button class="quiet">Remove</button>
+                        </form>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {!readOnly && (
+                <form method="post" action={action} class="add-form">
+                  <input type="hidden" name="term" value={term} />
+                  <input type="hidden" name="back" value={back} />
+                  <label for={`add-${term}`}>Add a course</label>
+                  <select id={`add-${term}`} name="course" required>
+                    <option value="">Choose…</option>
+                    {addable.map((c) => (
+                      <option value={c.code}>
+                        {c.code} {c.name}
+                        {c.sessions.includes(termSession(term)) ? "" : ` (not in ${termSession(term)})`}
+                      </option>
+                    ))}
+                  </select>
+                  <button>Add</button>
+                </form>
+              )}
+            </section>
+          );
+        })
+      }
+      {
+        beyond.length > 0 && (
+          <section class="term" aria-labelledby="beyond-heading">
+            <h2 id="beyond-heading">Outside these four semesters</h2>
+            <ul class="term-items">
+              {beyond.map((item) => (
+                <li class="plan-item">
+                  <a href={`/course/${item.courseCode}`} class="code">
+                    {item.courseCode}
+                  </a>{" "}
+                  {termLabel(item.term)}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )
+      }
+    </div>
+
+    <aside class="progress" aria-labelledby="progress-heading">
+      <h2 id="progress-heading">Towards the degree</h2>
+      <ul>
+        {
+          progress.map((r) => (
+            <li data-met={r.met ? "yes" : "no"}>
+              <span class="req-mark" aria-hidden="true">
+                {r.met ? "✓" : "✗"}
+              </span>
+              <span class="progress-label">{r.label}</span>
+              <span class="progress-count">
+                {r.have}/{r.need}
+              </span>
+              <span class="visually-hidden">{r.met ? "met" : "not met"}</span>
+              {r.detail && <span class="progress-detail">{r.detail}</span>}
+            </li>
+          ))
+        }
+      </ul>
+      <p class="unchecked">Not checked here: {MCOMP_UNCHECKED.join("; ")}.</p>
+      <p><a href={MCOMP_SOURCE}>The program's full rules on Programs and Courses</a></p>
+    </aside>
+  </div>
+
+  {
+    !readOnly && (
+      <script is:inline define:vars={{ planId: plan.id }}>
+        // Another tab changed this plan: re-render from the database. A tab
+        // that is submitting a form is already on its way to a fresh page.
+        let submitting = false;
+        document.addEventListener("submit", () => (submitting = true));
+        new EventSource("/api/events").addEventListener("message", (event) => {
+          if (!submitting && JSON.parse(event.data).plan === planId) location.reload();
+        });
+      </script>
+    )
+  }
+</Base>
