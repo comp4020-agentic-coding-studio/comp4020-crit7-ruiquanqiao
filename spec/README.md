@@ -42,20 +42,27 @@ all of it, so styling and navigation around it pass and a trimmed copy fails.
 The starter's guestbook test went with the guestbook. These replace it, and
 each holds a promise the app makes:
 
-- `requisites.test.ts` pins the parser to real handbook sentences: clear ones
-  become the expected tree, and a sentence with two readings (COMP8600) is
-  refused rather than guessed. It also holds the rule that keeps that honest
-  after a re-scrape: every refused course has a person's reading in
-  `data/requisite-overrides.json`, and no reading outlives the parser's
-  ability to read the course itself.
+- `requisites.test.ts` pins the parser to real handbook sentences from every
+  year held: clear ones become the expected tree, a sentence with two readings
+  (COMP8600) is refused rather than guessed, and each past silent misparse
+  (STAT7039, COMP6340, INFS8004) has its own case. It also holds the rules that
+  keep that honest after a re-scrape: every refused wording in every year has a
+  person's reading in `data/requisite-readings.json`, every program and
+  specialisation wording has encoded rules in `data/rule-readings.json`, and
+  no reading outlives the wording it reads.
 - `planner.test.ts` drives the core flow over HTTP: a placed course survives a
   fresh load (the crit 7 spec's "create something, and it's still there"), and
   a placement gets a warning for the wrong semester, for a prerequisite that
-  comes later, and for an incompatible course, but never a refusal. The
-  example plan stays read-only and clear of problems.
-- `catalog.test.ts` checks requisites render as linked structure, the reverse
-  "what it leads to" list, and crawls every internal link the way CI's
-  post-deploy link check will, so a dead link fails here first.
+  comes later, and for an incompatible course, but never a refusal. It holds
+  the year rules too: a course is judged by the handbook of the year it is
+  taken (COMP8830 in 2026 against 2027), a degree by the year it started (2025
+  and 2026 compulsory courses differ), an unpublished year falls back to the
+  latest with a note, and COMP8715 is expected twice in consecutive semesters.
+  The example plan stays read-only and clear of problems.
+- `catalog.test.ts` checks requisites render as linked structure, a course's
+  wording history across years, the reverse "what it leads to" list, and crawls
+  every internal link the way CI's post-deploy link check will, so a dead link
+  fails here first.
 
 They assert the pages' `data-*` attributes (`data-course`, `data-status`,
 `data-warning`, `data-source`) rather than their wording.

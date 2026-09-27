@@ -4,29 +4,51 @@ The rules I hold the agent to in this repo. The brief and spec are on the
 course site (crit 7, "Build the ANU system you wish existed"); `README.md` says
 what the app is and why it is shaped this way.
 
+## Years
+
+- **Two kinds of year, never one.** A course is judged by the handbook of the
+  year it is taken; a degree by the handbook of the year the student started.
+  Nothing may assume a single handbook. This rule exists because the first
+  version held only 2026 and called COMP8830 impossible for Master of
+  Computing students; its 2026 wording was a year behind a course change, and
+  the 2027 wording fixes it.
+- **Before calling a rule contradictory, read the same rule in the other
+  years.** A rule that looks wrong in one year is usually mid-transition.
+- Past the latest handbook, the latest is assumed and the page says so. Inside
+  the range, a course missing from that year's handbook is a warning.
+
 ## The data rules
 
 - **Never guess a requisite.** When P&C's prose has two readings, the parser
   returns `ambiguous` and a person writes the reading into
-  `data/requisite-overrides.json`, with a sentence saying why. Do not make the
+  `data/requisite-readings.json`, with a sentence saying why. A reading is
+  bound to the exact wording it reads, not to a course code. Do not make the
   parser cleverer to get a course out of that file unless the new rule is
   general and every existing parsed tree still matches its source text.
-- **A requirement sentence that yields nothing is ambiguous, not empty.** This
-  rule exists because STAT7039 once parsed as "STAT7055" alone: an
-  abbreviation split the sentence and the half holding the real condition was
-  silently dropped.
+- **Anything the parser drops must make the result ambiguous, never smaller.**
+  Three silent misparses taught this, each now a rule: STAT7039 lost the half
+  of a sentence an abbreviation split off (a requirement sentence that yields
+  nothing is ambiguous); COMP6340 read a "must contact Student Services"
+  instruction as a condition (a procedure is not a requirement); INFS8004 lost
+  an unknown program and kept the dangling "or" (an operator with nothing
+  before it is ambiguous).
 - **Check every parsed tree against its source text after any parser change**,
-  not only the ones a test names. Print them with `formatReq` and read them.
-- **Keep a rule literal even when it looks wrong.** COMP8830 as written cannot
-  be met by an MCOMP student; it is flagged in its reading, not corrected.
+  not only the ones a test names: `pnpm readings --all`, diffed before and
+  after.
+- **Program and specialisation rules are hand-encoded per wording** in
+  `data/rule-readings.json`. A specialisation the program names but the
+  handbook doesn't publish (Machine Learning in 2027) is kept as unpublished,
+  never filled in from another year.
 - **The network is touched in one place.** `pnpm scrape` writes
-  `data/catalog.json`; the build and the server read only that file. Never add
-  a live fetch from P&C to a page or to the build.
+  `data/handbook/<year>.json`; the build and the server read only those
+  files. `pnpm readings` then lists every wording that needs a person. Never
+  add a live fetch from P&C to a page or to the build.
 
 ## The product rules
 
-- **Warn, never block.** No check may stop a student placing a course. The
-  rules are a snapshot of prose; the student may hold a permission code.
+- **Warn, never block.** No check may stop a student placing a course, in any
+  semester, or twice. The rules are a snapshot of prose; the student may hold
+  a permission code, or be retaking a course.
 - **Say what isn't checked.** Caveats (GPA, permission codes, "equivalent"),
   unencoded program rules, and the snapshot date stay visible on the page.
 - **Every internal link must resolve.** Codes a requisite mentions but the
@@ -43,8 +65,10 @@ what the app is and why it is shaped this way.
 - drizzle-kit asks interactively when a change both drops and creates a table
   (it wants to know if it's a rename), and fails without a TTY. Split such a
   change into two migrations: additions first, then the drop.
-- The catalog tables are rebuilt from `data/` at every boot; `plans` and
+- The handbook tables are rebuilt from `data/` at every boot; `plans` and
   `plan_items` are student state and nothing but the planner writes to them.
+- A placement is addressed by its id, not its course code: a course can be in
+  a plan twice (COMP8715 must be).
 
 ## Checks
 
