@@ -46,13 +46,14 @@ Four years side by side also showed that COMP6250 and COMP8260, compulsory for
 my cohort, stop running in 2026, and that the 2027 handbook names a Machine
 Learning specialisation it never publishes.
 
-**Checked the way CI and a marker will meet it.**
+**Checked the way CI and a marker will meet it, and sensors where it failed.**
 [`5f4a159`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-RuiquanQiao/commit/5f4a159),
-[`f62a43b`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-RuiquanQiao/commit/f62a43b)
-In the browser, a plan started in Semester 2 2025 gets 2025's compulsory
-courses and specialisations, with its first two semesters marked completed;
-in the spec, COMP8830 placed in 2026 warns and moved to 2027 clears. A spec test crawls the running app the way CI's
-post-deploy link check will: 436 pages, no dead links. Loading every route in a
-390px frame found the plan page 739px wide, a `<select>` sizing itself to its
-longest option; it now measures 386 of 386. After each deploy I replayed CI's
-probes against the live URL.
+[`18d3ccd`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit7-RuiquanQiao/commit/18d3ccd)
+A spec test crawls the running app the way CI's post-deploy link check will:
+436 pages, no dead links. Loading every route in a 390px frame found the plan
+page 739px wide, a `<select>` sizing itself to its longest option; it measures
+386 of 386 now. The year model then went red on the runner with every test
+green locally: axe over the course list took 5.7s against a 5s limit, because
+the new per-year history had taken the page to 1664 nodes. Rather than raise
+the timeout, the cards carry that history as one line (752 nodes) and a test
+holds the page under 800, so growth fails here first.
