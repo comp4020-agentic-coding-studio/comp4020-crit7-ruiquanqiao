@@ -36,7 +36,15 @@ COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/dist /app/dist
 # the committed migrations, applied at boot (see src/lib/db.ts)
 COPY --from=build /app/drizzle /app/drizzle
+# the handbook snapshots, read from disk at boot rather than bundled: every
+# course in four years is tens of megabytes (see src/lib/catalog.ts)
+COPY --from=build /app/data /app/data
 
+# The machine has 256MB. Left to itself V8 grew its young generation to 134MB,
+# almost all of it empty, taking the server to ~280MB after loading the whole
+# handbook. Capped, a warm boot sits at ~150MB and the first-boot rebuild of
+# every course still completes under a 110MB old-space limit.
+ENV NODE_OPTIONS="--max-semi-space-size=8 --max-old-space-size=160"
 ENV HOST=0.0.0.0
 ENV PORT=4321
 EXPOSE 4321

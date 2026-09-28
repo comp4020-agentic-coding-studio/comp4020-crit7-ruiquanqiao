@@ -2,7 +2,7 @@
 
 ## What I built
 
-Prereq: the ANU Programs and Courses handbooks for 2024 to 2027, with
+Prereq: every course in the ANU Programs and Courses handbooks for 2024 to 2027, with
 prerequisites, offerings, incompatibilities and degree rules turned from
 paragraphs into relations, and a semester planner that checks every placement
 by the right year's rules. `README.md` has the argument for its shape.

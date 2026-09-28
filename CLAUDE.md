@@ -35,6 +35,11 @@ what the app is and why it is shaped this way.
 - **Check every parsed tree against its source text after any parser change**,
   not only the ones a test names: `pnpm readings --all`, diffed before and
   after.
+- **The snapshot is the whole handbook**, every subject and career, about
+  3,000 courses a year. The ambiguous wordings a Master of Computing plan
+  relies on (postgraduate COMP, and every course a rule names) must each have
+  a person's reading; every other ambiguous wording is stored as `unread`
+  and claims nothing. Never show an unread course as having no prerequisites.
 - **Program and specialisation rules are hand-encoded per wording** in
   `data/rule-readings.json`. A specialisation the program names but the
   handbook doesn't publish (Machine Learning in 2027) is kept as unpublished,
@@ -69,6 +74,17 @@ what the app is and why it is shaped this way.
   `plan_items` are student state and nothing but the planner writes to them.
 - A placement is addressed by its id, not its course code: a course can be in
   a plan twice (COMP8715 must be).
+
+## Running on a 256MB machine
+
+- The Dockerfile caps V8 (`--max-semi-space-size=8 --max-old-space-size=160`).
+  Without it the young generation grew to 134MB, nearly empty, and the server
+  sat at ~280MB with the whole handbook loaded. Measure `process.memoryUsage()`
+  and `v8.getHeapSpaceStatistics()` before and after any change that loads
+  more data at boot.
+- The handbook tables are rebuilt only when the fingerprint in `meta` changes
+  (snapshots, readings, and the parser's source). Snapshot files are hashed as
+  bytes, never decoded, on a boot that skips the rebuild.
 
 ## Checks
 

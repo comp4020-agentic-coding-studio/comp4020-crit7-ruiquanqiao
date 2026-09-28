@@ -1,17 +1,22 @@
-// Snapshot of Programs and Courses, one file per handbook year, into
-// data/handbook/<year>.json. Run by hand (`pnpm scrape [years...]`); the build
-// and the server never touch the network, so the app can't break because P&C
-// is slow, down, or has changed its markup.
+// Snapshot of Programs and Courses, every course in every career, one file per
+// handbook year, into data/handbook/<year>.json. Run by hand (`pnpm scrape
+// [years...]`); the server never touches the network, so the app can't break
+// because P&C is slow, down, or has changed its markup.
 //
 // Rules differ by year and apply by different years: a course is judged by the
 // handbook of the year it is taken, a degree by the handbook of the year the
-// student started. So every year a live plan can touch is kept, not just the
-// latest.
+// student started. So every year a live plan can touch is kept.
+//
+// About 3,000 course pages a year. Each page's relevant fragments are cached
+// in .cache/pc/ (untracked), so an interrupted run resumes where it stopped
+// and a change to the extraction below re-runs without re-fetching.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 
 const BASE = "https://programsandcourses.anu.edu.au";
 const PROGRAM = "7706XMCOMP";
-const DELAY_MS = 800;
+const DELAY_MS = 250;
+const WORKERS = 8;
 const years = process.argv.slice(2).map(Number);
 if (years.length === 0) years.push(2024, 2025, 2026, 2027);
 
@@ -45,17 +50,18 @@ export type ScrapedProgram = {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function get(path: string): Promise<string | null> {
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const res = await fetch(`${BASE}${path}`, { redirect: "manual" });
       await sleep(DELAY_MS);
       if (res.status === 200) return await res.text();
       if (res.status === 301 || res.status === 302 || res.status === 404) return null;
     } catch {
-      await sleep(DELAY_MS * attempt * 2);
+      // a dropped connection: back off and try again
     }
+    await sleep(DELAY_MS * attempt * 4);
   }
-  throw new Error(`${path}: failed three times`);
+  throw new Error(`${path}: failed four times`);
 }
 
 function decode(text: string): string {
@@ -103,7 +109,7 @@ async function listCourses(year: number): Promise<ListItem[]> {
     PageIndex: "0",
     MaxPageSize: "10",
     PageSize: "Infinity",
-    SearchText: "COMP",
+    SearchText: "",
     SelectedYear: String(year),
     CollegeName: "All Colleges",
     ModeOfDelivery: "All Modes",
@@ -113,8 +119,32 @@ async function listCourses(year: number): Promise<ListItem[]> {
   return (JSON.parse(body) as { Items: ListItem[] }).Items;
 }
 
+// Only the fragments extraction reads are cached: a whole page is ~60KB, and
+// 12,000 of them would be most of a gigabyte.
+const FRAGMENTS = [
+  /intro__degree-title__component">[^<]*</,
+  /Unit Value<\/span>\s*[\d.]+\s*units/,
+  /Academic career<\/span>\s*<span[^>]*>[^<]*</,
+  /Offered in<\/span>\s*<span[^>]*>[\s\S]*?<\/span>/,
+  /<div class="introduction" id="introduction">[\s\S]*?<\/div>/,
+  /<div class="requisite">[\s\S]*?<\/div>/,
+];
+
+async function coursePage(year: number, code: string): Promise<string | null> {
+  const file = `.cache/pc/${year}/${code}.json`;
+  if (existsSync(file)) {
+    const cached = JSON.parse(readFileSync(file, "utf8")) as { html?: string };
+    return cached.html ?? null;
+  }
+  const page = await get(`/${year}/course/${code}`);
+  const kept = page ? FRAGMENTS.map((pattern) => page.match(pattern)?.[0] ?? "").join("\n") : null;
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify(kept ? { html: kept } : { missing: true }));
+  return kept;
+}
+
 async function scrapeCourse(year: number, code: string, listed?: ListItem) {
-  const html = await get(`/${year}/course/${code}`);
+  const html = await coursePage(year, code);
   if (!html) return null;
   const title = html.match(/intro__degree-title__component">([^<]*)</)?.[1];
   if (!title) return null;
@@ -122,11 +152,13 @@ async function scrapeCourse(year: number, code: string, listed?: ListItem) {
   const career = html.match(/Academic career<\/span>\s*<span[^>]*>([^<]*)</)?.[1]?.trim();
   const offeredIn = html.match(/Offered in<\/span>\s*<span[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? "";
   const requisiteHtml = html.match(/<div class="requisite">([\s\S]*?)<\/div>/)?.[1] ?? "";
+  const careerName =
+    career === "PGRD" ? "Postgraduate" : career === "UGRD" ? "Undergraduate" : career === "RSCH" ? "Research" : (career ?? "");
   const course: ScrapedCourse = {
     code,
     name: decode(title.trim()),
     units,
-    career: listed?.Career ?? (career === "PGRD" ? "Postgraduate" : career === "UGRD" ? "Undergraduate" : (career ?? "")),
+    career: listed?.Career ?? careerName,
     sessions: parseSessions(listed ? listed.Session.split("/").join(" ") : offeredIn),
     description: toText(html.match(/<div class="introduction" id="introduction">([\s\S]*?)<\/div>/)?.[1] ?? ""),
     requisiteText: toText(requisiteHtml),
@@ -180,38 +212,60 @@ for (const file of existsSync("data/handbook") ? readdirSync("data/handbook") : 
   }
 }
 
+// A few workers draining one queue, each pausing between its own requests.
+async function drain<T>(items: T[], work: (item: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  let done = 0;
+  await Promise.all(
+    Array.from({ length: WORKERS }, async () => {
+      while (next < items.length) {
+        await work(items[next++]);
+        if (++done % 250 === 0) console.log(`  ${done}/${items.length}`);
+      }
+    }),
+  );
+}
+
 mkdirSync("data/handbook", { recursive: true });
 for (const year of years) {
-  const listed = (await listCourses(year)).filter((c) => c.Career === "Postgraduate" && c.CourseCode.startsWith("COMP"));
+  // The list with no search text is the whole handbook: checked against
+  // per-subject searches for COMP, MATH, STAT, ENGN, LAWS, CHIN, BUSN, PHYS.
+  const listed = await listCourses(year);
+  console.log(`${year}: ${listed.length} courses listed`);
   const courses = new Map<string, ScrapedCourse>();
-  const pending = new Set<string>();
+  const referenced = new Set<string>();
 
-  for (const item of listed) {
+  await drain(listed, async (item) => {
     const result = await scrapeCourse(year, item.CourseCode, item);
-    if (!result) continue;
+    if (!result) return;
     courses.set(item.CourseCode, result.course);
-    for (const code of result.referenced) pending.add(code);
-  }
+    for (const code of result.referenced) referenced.add(code);
+  });
 
   const program = await scrapeProgram(year);
-  for (const code of program.requirementText.match(/[A-Z]{4}\d{4}/g) ?? []) pending.add(code);
-  for (const spec of program.specialisations) for (const code of spec.courses) pending.add(code);
+  for (const code of program.requirementText.match(/[A-Z]{4}\d{4}/g) ?? []) referenced.add(code);
+  for (const spec of program.specialisations) for (const code of spec.courses) referenced.add(code);
 
-  // Postgraduate courses the requisites, the program or a specialisation name
-  // that the COMP list didn't include (MATH6005, STAT6039, ENGN courses in a
-  // specialisation...), one hop out. Undergraduate codes stay bare.
-  for (const code of pending) {
-    if (courses.has(code) || Number(code[4]) < 6) continue;
-    const result = await scrapeCourse(year, code);
-    if (result) courses.set(code, result.course);
-  }
+  // Codes a rule names that the year's list doesn't carry: usually retired,
+  // occasionally still published. Tried once each.
+  await drain(
+    [...referenced].filter((code) => !courses.has(code)),
+    async (code) => {
+      const result = await scrapeCourse(year, code);
+      if (result) courses.set(code, result.course);
+    },
+  );
 
+  // One course per line, so a re-scrape's diff shows which courses changed.
   const sorted = [...courses.values()].sort((a, b) => a.code.localeCompare(b.code));
+  const head = JSON.stringify({ source: BASE, year, scrapedAt: new Date().toISOString(), program });
   writeFileSync(
     `data/handbook/${year}.json`,
-    `${JSON.stringify({ source: BASE, year, scrapedAt: new Date().toISOString(), program, courses: sorted }, null, 2)}\n`,
+    `${head.slice(0, -1)},"courses":[\n${sorted.map((c) => JSON.stringify(c)).join(",\n")}\n]}\n`,
   );
+  const careers: Record<string, number> = {};
+  for (const c of sorted) careers[c.career] = (careers[c.career] ?? 0) + 1;
   console.log(
-    `${year}: ${listed.length} listed PG COMP, ${sorted.length} courses kept, ${sorted.filter((c) => c.requisiteText).length} with requisite text, ${program.specialisations.length} specialisations`,
+    `${year}: ${sorted.length} kept ${JSON.stringify(careers)}, ${sorted.filter((c) => c.requisiteText).length} with requisite text, ${program.specialisations.length} specialisations`,
   );
 }

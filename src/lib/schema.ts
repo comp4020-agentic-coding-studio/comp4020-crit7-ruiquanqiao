@@ -39,8 +39,9 @@ export const courseVersions = sqliteTable(
     description: text().notNull().default(""),
     requisiteText: text("requisite_text").notNull().default(""),
     // parsed: read by the parser; hand-checked: a person's reading of this
-    // exact wording (data/requisite-readings.json); none: nothing to meet
-    requisiteSource: text("requisite_source", { enum: ["parsed", "hand-checked", "none"] }).notNull(),
+    // exact wording (data/requisite-readings.json); unread: ambiguous and not
+    // yet read by anyone, so nothing is claimed; none: nothing to meet
+    requisiteSource: text("requisite_source", { enum: ["parsed", "hand-checked", "unread", "none"] }).notNull(),
     requisiteReading: text("requisite_reading"),
     // the wording also asks for something no rule here can check
     caveat: int({ mode: "boolean" }).notNull().default(false),
@@ -147,6 +148,14 @@ export const ruleCourses = sqliteTable(
   },
   (t) => [primaryKey({ columns: [t.ruleId, t.code] })],
 );
+
+// What the handbook tables were last built from: a fingerprint of the
+// snapshots, the readings and the code that turns them into rows. A boot with
+// the same fingerprint skips the rebuild.
+export const meta = sqliteTable("meta", {
+  key: text().primaryKey(),
+  value: text().notNull(),
+});
 
 // --- student state: lives on the volume, never touched by a reseed ---------
 

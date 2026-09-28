@@ -48,6 +48,7 @@ const source = `https://programsandcourses.anu.edu.au/${year}/course/${course.co
 const sourceLabel = {
   parsed: "Read automatically from the handbook's wording",
   "hand-checked": "The handbook's wording is ambiguous; this is a person's reading of it",
+  unread: "The handbook's wording is ambiguous and nobody has read it for this site yet, so no rule is claimed",
   none: "No prerequisites",
 };
 
@@ -160,8 +161,10 @@ const span = (years: number[]) => (years.length > 1 ? `${years[0]}–${years.at(
             <div class="req-tree">
               <RequisiteTree req={v.tree} ctx={judgedHere ? ctx : undefined} />
             </div>
+          ) : v.requisiteSource === "unread" ? (
+            <p class="caveat">Read the handbook's wording below before relying on this course.</p>
           ) : (
-            <p>None: anyone in a postgraduate program can enrol{excluded.length ? ", with the exception below" : ""}.</p>
+            <p>None{excluded.length ? ", with the exception below" : ""}.</p>
           )}
           {v.requisiteReading && <p class="reading">Why it's read this way: {v.requisiteReading}</p>}
           {v.caveat && (
@@ -203,7 +206,7 @@ const span = (years: number[]) => (years.length > 1 ? `${years[0]}–${years.at(
             </details>
           ) : (
             v.requisiteText && (
-              <details>
+              <details open={v.requisiteSource === "unread"}>
                 <summary>The handbook's original wording ({span(wordings[0]?.years ?? [year])})</summary>
                 <blockquote>{v.requisiteText}</blockquote>
               </details>

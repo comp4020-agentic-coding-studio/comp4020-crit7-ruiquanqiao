@@ -15,7 +15,9 @@ why.
 **It knows which year's rules apply.** Rules change from year to year, and
 they apply by two different years. A course is judged by the handbook of the
 year you take it; your degree by the handbook of the year you started. Prereq
-holds the 2024 to 2027 handbooks and applies each rule by the right one. A
+holds the whole of the 2024 to 2027 handbooks, every course in every subject
+and career (3,453, 3,118, 3,012 and 2,991 courses), and applies each rule by
+the right one. A
 2025 starter is held to the 2025 compulsory courses, not 2026's. A course
 placed in 2027 is judged by its 2027 wording. A course placed in a year whose
 handbook isn't published yet is judged by the latest one, and the plan says
@@ -29,9 +31,13 @@ silently will one day tell a student they can enrol when they can't. So the
 parser refuses anything ambiguous instead of guessing, and a person reads it.
 Each reading is tied to the exact wording it reads, with the reason written
 down, and a changed sentence in a new year has no reading until someone gives
-it one. Across the four years, 38 wordings are hand-read and the rest are read
-automatically or have no requirement. Every course page says which applies and
-keeps the handbook's wording one click away.
+it one. Every ambiguous wording a Master of Computing plan relies on (every
+postgraduate COMP course and every course a program or specialisation rule
+names) is hand-read: 39 wordings across the four years. The rest of the
+handbook is read automatically where the wording is unambiguous; where it
+isn't, about 1,400 courses a year, the course is marked unread and the site
+claims nothing about it rather than calling it open. Every course page says
+which applies and keeps the handbook's wording one click away.
 
 **It warns and never blocks.** The rules come from snapshots of prose, and a
 student holding a permission code or credit for earlier study knows things this

@@ -22,8 +22,11 @@ export const POST: APIRoute = async ({ params, request, redirect }) => {
     else if (isTerm(term)) moveItem(plan.id, itemId, term);
     else return new Response("No such semester.", { status: 400 });
   } else {
-    const course = getCourse(String(form.get("course") ?? ""));
-    if (!course || course.versions.size === 0) return new Response("No such course.", { status: 400 });
+    const code = String(form.get("course") ?? "").trim().toUpperCase();
+    const course = getCourse(code);
+    if (!course || course.versions.size === 0) {
+      return new Response(`${code || "That"} is not a course in any handbook this site holds.`, { status: 400 });
+    }
     if (!isTerm(term)) return new Response("No such semester.", { status: 400 });
     placeCourse(plan.id, course.code, term);
   }

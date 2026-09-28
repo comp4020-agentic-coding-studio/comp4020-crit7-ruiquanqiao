@@ -12,7 +12,7 @@ type Handbook = {
     requirementText: string;
     specialisations: { code: string; requirementText: string; missing?: boolean }[];
   };
-  courses: { code: string; requisiteText: string }[];
+  courses: { code: string; career: string; requisiteText: string }[];
 };
 const handbooks = readdirSync("data/handbook").map(
   (file) => JSON.parse(readFileSync(`data/handbook/${file}`, "utf8")) as Handbook,
@@ -112,11 +112,24 @@ describe("requisite readings", () => {
     h.courses.map((c) => ({ code: c.code, year: h.year, text: c.requisiteText, status: parseRequisite(c.requisiteText).status })),
   );
 
-  it("cover every ambiguous wording in every year", () => {
+  // The whole handbook is held, thousands of courses in every subject; a
+  // person reads the ambiguous wordings a Master of Computing plan leans on:
+  // every postgraduate COMP course and every course a program or
+  // specialisation rule names. The rest show as "unread", claiming nothing.
+  const relied = new Set<string>([
+    ...handbooks.flatMap((h) => h.courses.filter((c) => c.code.startsWith("COMP") && c.career === "Postgraduate").map((c) => c.code)),
+    ...Object.values(ruleReadings).flatMap((list) => list.flatMap((r) => r.rules.flatMap((rule) => rule.courses ?? []))),
+  ]);
+
+  it("cover every ambiguous wording a Master of Computing plan relies on, in every year", () => {
     const unread = wordings
-      .filter((w) => w.status === "ambiguous" && !readings[w.code]?.some((r) => same(r.text, w.text)))
+      .filter((w) => relied.has(w.code) && w.status === "ambiguous" && !readings[w.code]?.some((r) => same(r.text, w.text)))
       .map((w) => `${w.code} ${w.year}`);
     expect(unread).toEqual([]);
+  });
+
+  it("hold the whole handbook, not only computing", () => {
+    for (const h of handbooks) expect(h.courses.length, String(h.year)).toBeGreaterThan(2500);
   });
 
   it("each read a wording that exists and that the parser refuses", () => {

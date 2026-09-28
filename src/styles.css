@@ -850,3 +850,11 @@ blockquote {
   font-size: 0.75rem;
   color: var(--muted);
 }
+
+.pager {
+  display: flex;
+  gap: 1.25rem;
+  align-items: baseline;
+  justify-content: center;
+  margin: 1.5rem 0 0;
+}
