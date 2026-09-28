@@ -24,6 +24,3 @@ mise.local.toml
 # your course API key, and this repo goes public when you ship. Your tracked
 # harness is CLAUDE.md (and any AGENTS.md), not this directory.
 .claude/
-
-# the scraper's page cache: large, rebuildable, never committed
-.cache/

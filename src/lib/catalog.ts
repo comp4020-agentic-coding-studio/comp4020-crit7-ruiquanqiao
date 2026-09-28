@@ -1,10 +1,8 @@
-import { createHash } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import readingsData from "../../data/requisite-readings.json";
 import ruleReadingsData from "../../data/rule-readings.json";
 import { db } from "./db";
-import { codesInReq, PARSER_SOURCE, type ParsedRequisite, parseRequisite, type Req, readReq } from "./requisites";
+import { codesInReq, type ParsedRequisite, parseRequisite, type Req, readReq } from "./requisites";
 import {
   type Course,
   type CourseVersion,
@@ -13,7 +11,6 @@ import {
   courseRequisiteNodes,
   courses,
   courseVersions,
-  meta,
   type RequisiteNode,
   type Rule,
   ruleCourses,
@@ -41,9 +38,14 @@ type Handbook = {
   courses: ScrapedCourse[];
 };
 
-// The snapshots are read from disk, not bundled into the server: every course
-// in four handbook years is tens of megabytes (the Dockerfile copies data/).
-const HANDBOOK_DIR = "data/handbook";
+const handbooks: Handbook[] = Object.values(
+  import.meta.glob<Handbook>("../../data/handbook/*.json", { eager: true, import: "default" }),
+).sort((a, b) => a.year - b.year);
+
+export const HANDBOOK_YEARS = handbooks.map((h) => h.year);
+export const FIRST_YEAR = HANDBOOK_YEARS[0];
+export const LATEST_YEAR = HANDBOOK_YEARS[HANDBOOK_YEARS.length - 1];
+export const SCRAPED_AT = handbooks[handbooks.length - 1].scrapedAt;
 
 type Reading = { text: string; tree: string; reading: string };
 const readings: Record<string, Reading[]> = readingsData;
@@ -83,25 +85,21 @@ type Judged = ParsedRequisite & { source: CourseVersion["requisiteSource"]; read
 
 function judgeText(code: string, text: string): Judged {
   const result = parseRequisite(text);
-  if (result.status !== "ambiguous") return { ...result, source: result.tree ? "parsed" : "none", reading: null };
   const reading = readingFor(code, text);
-  if (reading) return { ...result, tree: readReq(reading.tree), source: "hand-checked", reading: reading.reading };
-  // Ambiguous and nobody has read it: the course shows its wording and makes
-  // no claim, never "no prerequisites". spec/requisites.test.ts holds every
-  // course a Master of Computing plan relies on to having a reading.
-  return { ...result, tree: null, source: "unread", reading: null };
+  if (result.status === "ambiguous") {
+    // spec/requisites.test.ts keeps an unread ambiguity from shipping; if one
+    // ever does, the course shows its wording and no verdict, not a guess
+    return reading
+      ? { ...result, tree: readReq(reading.tree), source: "hand-checked", reading: reading.reading }
+      : { ...result, tree: null, source: "none", reading: null };
+  }
+  return { ...result, source: result.tree ? "parsed" : "none", reading: null };
 }
 
-function chunks<T>(rows: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
-  return out;
-}
-
-// Rebuild the handbook tables from the snapshots, in one transaction. Courses
-// are upserted rather than replaced so plan rows pointing at them survive;
-// everything derived is cleared and rewritten. Plans are never touched.
-function seed(handbooks: Handbook[]): void {
+// Rebuild the handbook tables from data/ on every boot, in one transaction.
+// Courses are upserted rather than replaced so plan rows pointing at them
+// survive; everything derived is cleared and rewritten. Plans are never touched.
+function seed(): void {
   const judged = new Map<string, Judged>();
   const referenced = new Set<string>();
   const latestName = new Map<string, string>();
@@ -113,7 +111,8 @@ function seed(handbooks: Handbook[]): void {
       latestName.set(course.code, course.name);
       for (const code of [...(result.tree ? codesInReq(result.tree) : []), ...result.incompatible]) referenced.add(code);
     }
-    for (const set of [handbook.program, ...handbook.program.specialisations]) {
+    const sets = [handbook.program, ...handbook.program.specialisations];
+    for (const set of sets) {
       for (const rule of ruleReadingFor(set.code, set.requirementText)?.rules ?? []) {
         for (const code of [...(rule.courses ?? []), ...(rule.exclude ?? [])]) referenced.add(code);
       }
@@ -121,94 +120,81 @@ function seed(handbooks: Handbook[]): void {
     for (const spec of handbook.program.specialisations) for (const code of spec.courses) referenced.add(code);
   }
 
-  const identity = (code: string, stub: boolean) => ({
-    code,
-    name: latestName.get(code) ?? code,
-    subject: code.slice(0, 4),
-    level: Number(code[4]) * 1000,
-    stub,
-  });
-  const courseRows = [
-    ...[...latestName.keys()].map((code) => identity(code, false)),
-    ...[...referenced].filter((code) => !latestName.has(code)).map((code) => identity(code, true)),
-  ];
-
-  const versionRows: (typeof courseVersions.$inferInsert)[] = [];
-  const offeringRows: (typeof courseOfferings.$inferInsert)[] = [];
-  const incompatibleRows: (typeof courseIncompatibilities.$inferInsert)[] = [];
-  const nodeRows: (typeof courseRequisiteNodes.$inferInsert)[] = [];
-  let nodeId = 0;
-  for (const handbook of handbooks) {
-    const year = handbook.year;
-    for (const course of handbook.courses) {
-      const result = judged.get(`${course.code}@${year}`) as Judged;
-      versionRows.push({
-        code: course.code,
-        year,
-        name: course.name,
-        units: course.units,
-        career: course.career,
-        description: course.description,
-        requisiteText: course.requisiteText,
-        requisiteSource: result.source,
-        requisiteReading: result.reading,
-        caveat: result.caveat,
-        excludedPrograms: result.excludedPrograms.join(","),
-        takenTwice: /completed twice,? in consecutive semesters/i.test(course.description),
-      });
-      for (const session of course.sessions as (typeof courseOfferings.$inferInsert)["session"][]) {
-        offeringRows.push({ code: course.code, year, session });
-      }
-      for (const other of new Set(result.incompatible)) incompatibleRows.push({ code: course.code, year, otherCode: other });
-      // ids are assigned here, not read back row by row: a tree is written in
-      // one batch with the rest
-      const addNode = (req: Req, parentId: number | null, position: number): void => {
-        const id = ++nodeId;
-        nodeRows.push({
-          id,
-          code: course.code,
-          year,
-          parentId,
-          position,
-          kind: req.kind,
-          ref: req.kind === "course" ? req.code : req.kind === "program" ? req.program : req.kind === "units" ? req.subject : null,
-          concurrent: req.kind === "course" && req.concurrent,
-          units: req.kind === "units" ? req.units : null,
-          level: req.kind === "units" ? req.level : null,
-        });
-        if (req.kind === "all" || req.kind === "any") req.of.forEach((child, i) => addNode(child, id, i));
-      };
-      if (result.tree) addNode(result.tree, null, 0);
-    }
-  }
-
   db.transaction((tx) => {
     tx.delete(ruleCourses).run();
     tx.delete(rules).run();
     tx.update(ruleSets).set({ parentId: null }).run();
     tx.delete(ruleSets).run();
-    tx.update(courseRequisiteNodes).set({ parentId: null }).run();
     tx.delete(courseRequisiteNodes).run();
     tx.delete(courseIncompatibilities).run();
     tx.delete(courseOfferings).run();
     tx.delete(courseVersions).run();
 
-    for (const batch of chunks(courseRows, 500)) {
-      tx.insert(courses)
-        .values(batch)
-        .onConflictDoUpdate({
-          target: courses.code,
-          set: { name: sql`excluded.name`, subject: sql`excluded.subject`, level: sql`excluded.level`, stub: sql`excluded.stub` },
-        })
-        .run();
+    const identity = (code: string, stub: boolean) => ({
+      code,
+      name: latestName.get(code) ?? code,
+      subject: code.slice(0, 4),
+      level: Number(code[4]) * 1000,
+      stub,
+    });
+    for (const code of latestName.keys()) {
+      const row = identity(code, false);
+      tx.insert(courses).values(row).onConflictDoUpdate({ target: courses.code, set: row }).run();
     }
-    for (const batch of chunks(versionRows, 200)) tx.insert(courseVersions).values(batch).run();
-    for (const batch of chunks(offeringRows, 1000)) tx.insert(courseOfferings).values(batch).run();
-    for (const batch of chunks(incompatibleRows, 1000)) tx.insert(courseIncompatibilities).values(batch).run();
-    for (const batch of chunks(nodeRows, 500)) tx.insert(courseRequisiteNodes).values(batch).run();
+    for (const code of referenced) {
+      if (latestName.has(code)) continue;
+      const row = identity(code, true);
+      tx.insert(courses).values(row).onConflictDoUpdate({ target: courses.code, set: row }).run();
+    }
 
     for (const handbook of handbooks) {
       const year = handbook.year;
+      for (const course of handbook.courses) {
+        const result = judged.get(`${course.code}@${year}`) as Judged;
+        tx.insert(courseVersions)
+          .values({
+            code: course.code,
+            year,
+            name: course.name,
+            units: course.units,
+            career: course.career,
+            description: course.description,
+            requisiteText: course.requisiteText,
+            requisiteSource: result.source,
+            requisiteReading: result.reading,
+            caveat: result.caveat,
+            excludedPrograms: result.excludedPrograms.join(","),
+            takenTwice: /completed twice,? in consecutive semesters/i.test(course.description),
+          })
+          .run();
+        for (const session of course.sessions as (typeof courseOfferings.$inferInsert)["session"][]) {
+          tx.insert(courseOfferings).values({ code: course.code, year, session }).run();
+        }
+        for (const other of result.incompatible) {
+          tx.insert(courseIncompatibilities).values({ code: course.code, year, otherCode: other }).onConflictDoNothing().run();
+        }
+        const insertNode = (req: Req, parentId: number | null, position: number): void => {
+          const { id } = tx
+            .insert(courseRequisiteNodes)
+            .values({
+              code: course.code,
+              year,
+              parentId,
+              position,
+              kind: req.kind,
+              ref:
+                req.kind === "course" ? req.code : req.kind === "program" ? req.program : req.kind === "units" ? req.subject : null,
+              concurrent: req.kind === "course" && req.concurrent,
+              units: req.kind === "units" ? req.units : null,
+              level: req.kind === "units" ? req.level : null,
+            })
+            .returning({ id: courseRequisiteNodes.id })
+            .get();
+          if (req.kind === "all" || req.kind === "any") req.of.forEach((child, i) => insertNode(child, id, i));
+        };
+        if (result.tree) insertNode(result.tree, null, 0);
+      }
+
       const programText = handbook.program.requirementText;
       const insertSet = (set: ScrapedRuleSet, kind: RuleSet["kind"], parentId: number | null): number => {
         const reading = set.missing ? undefined : ruleReadingFor(set.code, set.requirementText);
@@ -251,46 +237,6 @@ function seed(handbooks: Handbook[]): void {
     }
   });
 }
-
-// Rebuild only when something it is built from has changed: the snapshots,
-// the readings, or the code that turns them into rows. A cold start on Fly
-// then costs a hash, not a rebuild of every course in four years.
-function ensureSeeded(): { years: number[]; scrapedAt: string } {
-  const files = readdirSync(HANDBOOK_DIR)
-    .filter((file) => file.endsWith(".json"))
-    .sort();
-  const hash = createHash("sha256");
-  // hashed as bytes, never decoded: a boot that skips the rebuild should not
-  // hold 15MB of snapshot text as strings on a 256MB machine
-  for (const file of files) hash.update(readFileSync(`${HANDBOOK_DIR}/${file}`));
-  hash.update(JSON.stringify(readings)).update(JSON.stringify(ruleReadings));
-  hash.update(PARSER_SOURCE).update(String(seed)).update(String(judgeText));
-  const fingerprint = hash.digest("hex");
-
-  const stored = new Map(db.select().from(meta).all().map((row) => [row.key, row.value]));
-  if (stored.get("fingerprint") !== fingerprint) {
-    const handbooks = files
-      .map((file) => JSON.parse(readFileSync(`${HANDBOOK_DIR}/${file}`, "utf8")) as Handbook)
-      .sort((a, b) => a.year - b.year);
-    seed(handbooks);
-    const values = {
-      fingerprint,
-      years: JSON.stringify(handbooks.map((h) => h.year)),
-      scrapedAt: handbooks[handbooks.length - 1].scrapedAt,
-    };
-    for (const [key, value] of Object.entries(values)) {
-      db.insert(meta).values({ key, value }).onConflictDoUpdate({ target: meta.key, set: { value } }).run();
-      stored.set(key, value);
-    }
-  }
-  return { years: JSON.parse(stored.get("years") ?? "[]") as number[], scrapedAt: stored.get("scrapedAt") ?? "" };
-}
-
-const seeded = ensureSeeded();
-export const HANDBOOK_YEARS = seeded.years;
-export const FIRST_YEAR = HANDBOOK_YEARS[0];
-export const LATEST_YEAR = HANDBOOK_YEARS[HANDBOOK_YEARS.length - 1];
-export const SCRAPED_AT = seeded.scrapedAt;
 
 // --- reading it back ---------------------------------------------------------------
 
@@ -348,6 +294,7 @@ function load(): Map<string, CatalogCourse> {
   return map;
 }
 
+seed();
 // The handbook only changes at boot, so it is read once and kept.
 const catalog = load();
 

@@ -1,12 +1,13 @@
 ---
 import Base from "../../layouts/Base.astro";
-import { allCourses, latestVersion } from "../../lib/catalog";
+import { coursesIn, handbookYearFor } from "../../lib/catalog";
 import {
   EXAMPLE_ID,
   getPlan,
   judgedItems,
   planTerms,
   termLabel,
+  termSession,
   termStatus,
   termYear,
 } from "../../lib/planner";
@@ -26,14 +27,6 @@ const action = `/api/plans/${plan.id}/items`;
 const back = `/plan/${plan.id}`;
 const specialisations = result.set?.specialisations.filter((s) => s.offered) ?? [];
 const statusLabel = { past: "Completed", current: "In progress", future: "" };
-
-// Suggestions for the add-a-course fields: every postgraduate course in any
-// handbook year, once. Any code can be typed, undergraduate included.
-const suggestions = readOnly
-  ? []
-  : allCourses()
-      .map((c) => ({ code: c.code, v: latestVersion(c) }))
-      .filter((c) => c.v?.career === "Postgraduate");
 
 const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
   rows.flatMap((row) => [{ ...row, depth }, ...flatten(row.children ?? [], depth + 1)]);
@@ -76,6 +69,8 @@ const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
           const units = here.reduce((sum, i) => sum + i.units, 0);
           const status = termStatus(term);
           const headingId = `term-${term}`;
+          const handbookYear = handbookYearFor(termYear(term));
+          const addable = coursesIn(handbookYear).filter((c) => !here.some((i) => i.courseCode === c.code));
           return (
             <section class="term" aria-labelledby={headingId} data-term={term} data-status={status}>
               <h2 id={headingId}>
@@ -110,11 +105,6 @@ const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
                     {item.resolved.assumed && item.resolved.version && (
                       <p class="item-note">
                         Judged by the {item.resolved.year} handbook; {termYear(term)}'s isn't published yet.
-                      </p>
-                    )}
-                    {item.resolved.version?.requisiteSource === "unread" && (
-                      <p class="item-note" data-note="unread">
-                        Its prerequisites haven't been read for this site, so they aren't checked; see the course page.
                       </p>
                     )}
                     {item.resolved.version?.caveat && item.warnings.length === 0 && (
@@ -152,16 +142,20 @@ const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
                 <form method="post" action={action} class="add-form">
                   <input type="hidden" name="term" value={term} />
                   <input type="hidden" name="back" value={back} />
-                  <label for={`add-${term}`}>Add a course by code</label>
-                  <input
-                    id={`add-${term}`}
-                    name="course"
-                    list="course-options"
-                    required
-                    pattern="[A-Za-z]{4}d{4}"
-                    placeholder="e.g. COMP6120"
-                    autocomplete="off"
-                  />
+                  <label for={`add-${term}`}>Add a course</label>
+                  <select id={`add-${term}`} name="course" required>
+                    <option value="">Choose…</option>
+                    {addable.map((c) => {
+                      const v = c.versions.get(handbookYear);
+                      const note = !v?.sessions.length ? " (not offered)" : v.sessions.includes(termSession(term)) ? "" : ` (not in ${termSession(term)})`;
+                      return (
+                        <option value={c.code}>
+                          {c.code} {v?.name}
+                          {note}
+                        </option>
+                      );
+                    })}
+                  </select>
                   <button>Add</button>
                 </form>
               )}
@@ -170,16 +164,6 @@ const flatten = (rows: Row[], depth = 0): (Row & { depth: number })[] =>
         })
       }
     </div>
-
-    {
-      !readOnly && (
-        <datalist id="course-options">
-          {suggestions.map((c) => (
-            <option value={c.code} label={c.v?.name} />
-          ))}
-        </datalist>
-      )
-    }
 
     <aside class="progress" aria-labelledby="progress-heading">
       <h2 id="progress-heading">Towards the degree</h2>

@@ -392,10 +392,3 @@ export function codesInReq(req: Req): string[] {
       return [];
   }
 }
-
-// The parser's own source, so the handbook tables are rebuilt whenever a rule
-// here changes, not only when the data does (see the seed in catalog.ts).
-export const PARSER_SOURCE = [tokenize, dropEmptyGroups, combine, parseLevel, parseSentence, parseRequisite, readReq]
-  .map(String)
-  .concat(PROGRAM_PATTERNS.map(([pattern, code]) => `${pattern}${code}`), String(CAVEAT))
-  .join("\n");

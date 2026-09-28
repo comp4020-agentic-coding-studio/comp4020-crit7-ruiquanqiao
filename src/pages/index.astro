@@ -11,36 +11,19 @@ const year = HANDBOOK_YEARS.includes(requestedYear) ? requestedYear : LATEST_YEA
 const session = params.get("session") ?? "";
 const level = params.get("level") ?? "";
 const q = (params.get("q") ?? "").trim().toLowerCase();
-// With no filters at all, the view a Master of Computing student needs most:
-// postgraduate COMP. Every other subject and career is one choice away.
-const fresh = !params.has("subject") && !params.has("career");
-const subject = fresh ? "COMP" : (params.get("subject") ?? "");
-const career = fresh ? "Postgraduate" : (params.get("career") ?? "");
-const PAGE_SIZE = 48;
 
 const planId = Astro.cookies.get("plan")?.value;
 const plan = planId ? getPlan(planId) : undefined;
 const items = plan ? getItems(plan.id) : [];
 const judged = new Map((plan ? judgedItems(plan) : []).map((item) => [item.courseCode, item]));
 
-const inYear = coursesIn(year);
-const subjects = [...new Set(inYear.map((c) => c.subject))].sort();
-const matching = inYear.filter((c) => {
+const courses = coursesIn(year).filter((c) => {
   const v = c.versions.get(year);
   if (!v) return false;
-  if (subject && c.subject !== subject) return false;
-  if (career && v.career !== career) return false;
   if (session && (session === "none" ? v.sessions.length > 0 : !v.sessions.includes(session))) return false;
   if (level && String(c.level) !== level) return false;
   return !q || `${c.code} ${v.name} ${v.description}`.toLowerCase().includes(q);
 });
-const pages = Math.max(1, Math.ceil(matching.length / PAGE_SIZE));
-const page = Math.min(Math.max(1, Number(params.get("page")) || 1), pages);
-const courses = matching.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-const pageLink = (n: number) => {
-  const next = new URLSearchParams({ year: String(year), subject, career, session, level, q, page: String(n) });
-  return `/?${next}`;
-};
 
 const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
 ---
@@ -74,20 +57,6 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
   <form method="get" action="/" class="filters" role="search">
     <label for="q">Search</label>
     <input id="q" name="q" type="search" value={q} placeholder="code, name or topic" />
-    <label for="subject">Subject</label>
-    <select id="subject" name="subject">
-      <option value="">All subjects</option>
-      {subjects.map((s) => <option value={s} selected={s === subject}>{s}</option>)}
-    </select>
-    <label for="career">Career</label>
-    <select id="career" name="career">
-      <option value="">Any career</option>
-      {["Undergraduate", "Postgraduate", "Research"].map((c) => (
-        <option value={c} selected={c === career}>
-          {c}
-        </option>
-      ))}
-    </select>
     <label for="year">Handbook</label>
     <select id="year" name="year">
       {HANDBOOK_YEARS.map((y) => <option value={y} selected={y === year}>{y}</option>)}
@@ -108,8 +77,7 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
   </form>
 
   <p class="count">
-    {matching.length} {matching.length === 1 ? "course" : "courses"} of {inYear.length} in the {year} handbook
-    {pages > 1 && ` · page ${page} of ${pages}`} · snapshots taken {scraped}
+    {courses.length} {courses.length === 1 ? "course" : "courses"} in the {year} handbook · snapshots taken {scraped}
   </p>
 
   <ul class="course-list">
@@ -153,16 +121,4 @@ const scraped = new Date(SCRAPED_AT).toLocaleDateString("en-AU", { day: "numeric
       })
     }
   </ul>
-
-  {
-    pages > 1 && (
-      <nav class="pager" aria-label="Pages of results">
-        {page > 1 && <a href={pageLink(page - 1)}>Previous</a>}
-        <span>
-          Page {page} of {pages}
-        </span>
-        {page < pages && <a href={pageLink(page + 1)}>Next</a>}
-      </nav>
-    )
-  }
 </Base>
